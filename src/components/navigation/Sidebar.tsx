@@ -40,7 +40,7 @@ export const Sidebar = () => {
   };
   
   return (
-    <div className={cn("fixed left-4 top-1/2 -translate-y-1/2 z-50 transition-all duration-300", isExpanded ? "w-48" : "w-14")}>
+    <div className={cn("fixed left-4 top-4 z-50 transition-all duration-300", isExpanded ? "w-48" : "w-14")}>
       <div className="glass-panel flex flex-col gap-1 py-2 px-2">
         {/* Logo */}
         <button onClick={handleLogoClick} className="flex items-center gap-3 px-1 py-2 rounded-lg transition-colors group">

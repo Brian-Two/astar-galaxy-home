@@ -6,9 +6,10 @@ interface PlanetProps {
   onSelect: (subject: Subject) => void;
   orbitDuration: number;
   animationDelay: number;
+  isSelected?: boolean;
 }
 
-export const Planet = ({ subject, onSelect, orbitDuration, animationDelay }: PlanetProps) => {
+export const Planet = ({ subject, onSelect, orbitDuration, animationDelay, isSelected }: PlanetProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   // Planet size based on activity (more recent = slightly larger)
@@ -20,10 +21,11 @@ export const Planet = ({ subject, onSelect, orbitDuration, animationDelay }: Pla
     <div
       className="relative transition-all duration-500 cursor-pointer"
       style={{
-        transform: `scale(${isHovered ? 1.2 : 1})`,
-        zIndex: isHovered ? 50 : 10,
+        transform: `scale(${isHovered && !isSelected ? 1.2 : 1})`,
+        zIndex: isHovered || isSelected ? 50 : 10,
         animation: `orbit ${orbitDuration}s linear infinite reverse`,
         animationDelay: `${animationDelay}s`,
+        animationPlayState: isSelected ? 'paused' : 'running',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

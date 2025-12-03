@@ -43,12 +43,18 @@ const Index = () => {
       </div>
 
       {/* Planets - Orbiting */}
-      <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-none">
+      <div 
+        className="fixed inset-0 flex items-center justify-center z-20 pointer-events-none transition-transform duration-700 ease-out"
+        style={{
+          transform: selectedSubject ? 'scale(1.3)' : 'scale(1)',
+        }}
+      >
         {subjects.map((subject, index) => {
           const orbitRadius = getOrbitRadius(subject.lastActiveDaysAgo);
           const baseAngle = getPlanetAngle(index, subjects.length);
           // Slower rotation for outer orbits
           const duration = 60 + orbitRadius * 0.2;
+          const isSelected = selectedSubject?.name === subject.name;
           
           return (
             <div
@@ -57,12 +63,14 @@ const Index = () => {
               style={{
                 animation: `orbit ${duration}s linear infinite`,
                 animationDelay: `-${(baseAngle / 360) * duration}s`,
+                animationPlayState: selectedSubject ? 'paused' : 'running',
               }}
             >
               <div
-                className="pointer-events-auto"
+                className="pointer-events-auto transition-all duration-500"
                 style={{
-                  transform: `translateX(${orbitRadius}px)`,
+                  transform: `translateX(${orbitRadius}px) scale(${isSelected ? 1.5 : 1})`,
+                  opacity: selectedSubject && !isSelected ? 0.3 : 1,
                 }}
               >
                 <Planet
@@ -70,6 +78,7 @@ const Index = () => {
                   onSelect={setSelectedSubject}
                   orbitDuration={duration}
                   animationDelay={-(baseAngle / 360) * duration}
+                  isSelected={isSelected}
                 />
               </div>
             </div>

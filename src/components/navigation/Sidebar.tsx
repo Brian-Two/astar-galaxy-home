@@ -40,13 +40,13 @@ export const Sidebar = () => {
   };
   
   return (
-    <div className={cn("fixed left-3 top-1/2 -translate-y-1/2 z-50 transition-all duration-300", isExpanded ? "w-44" : "w-12")}>
-      <div className="glass-panel flex flex-col gap-0.5 py-1.5 px-1.5">
+    <div className={cn("fixed left-4 top-1/2 -translate-y-1/2 z-50 transition-all duration-300", isExpanded ? "w-48" : "w-14")}>
+      <div className="glass-panel flex flex-col gap-1 py-2 px-2">
         {/* Logo */}
-        <button onClick={handleLogoClick} className="flex items-center gap-2 px-1 py-2 rounded-lg transition-colors group">
-          <img src={astarLogo} alt="ASTAR" className="w-8 h-8 flex-shrink-0" />
+        <button onClick={handleLogoClick} className="flex items-center gap-3 px-1 py-2 rounded-lg transition-colors group">
+          <img src={astarLogo} alt="ASTAR" className="w-10 h-10 flex-shrink-0" />
           {isExpanded && (
-            <span className="font-display font-bold text-sm text-foreground animate-fade-in">
+            <span className="font-display font-bold text-lg text-foreground animate-fade-in">
               STAR
             </span>
           )}
@@ -60,22 +60,22 @@ export const Sidebar = () => {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex items-center gap-2 px-1 py-1.5 rounded-lg transition-all duration-200 group relative",
+                "flex items-center gap-3 px-1 py-2 rounded-lg transition-all duration-200 group relative",
                 isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <div className="w-7 h-7 flex items-center justify-center flex-shrink-0">
-                <item.icon className="w-4 h-4" />
+              <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                <item.icon className="w-5 h-5" />
               </div>
               
               {isExpanded && (
-                <span className="font-medium text-xs animate-fade-in">{item.label}</span>
+                <span className="font-medium text-sm animate-fade-in">{item.label}</span>
               )}
 
               {/* Tooltip for collapsed state */}
               {!isExpanded && (
-                <div className="absolute left-full ml-2 px-2 py-1 glass-panel opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  <span className="font-medium text-xs text-foreground">{item.label}</span>
+                <div className="absolute left-full ml-3 px-3 py-2 glass-panel opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  <span className="font-medium text-sm text-foreground">{item.label}</span>
                 </div>
               )}
             </NavLink>
@@ -85,9 +85,9 @@ export const Sidebar = () => {
         {/* Expand/Collapse Toggle */}
         <button 
           onClick={() => setIsExpanded(!isExpanded)} 
-          className="flex items-center justify-center mt-1 py-1 text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center justify-center mt-2 py-2 text-muted-foreground hover:text-foreground transition-colors"
         >
-          {isExpanded ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          {isExpanded ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
         </button>
       </div>
     </div>

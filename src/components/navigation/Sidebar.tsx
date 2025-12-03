@@ -44,7 +44,9 @@ export const Sidebar = () => {
       <div className="glass-panel flex flex-col gap-1 py-2 px-2">
         {/* Logo */}
         <button onClick={handleLogoClick} className="flex items-center gap-3 px-1 py-2 rounded-lg transition-colors group">
-          <img src={astarLogo} alt="ASTAR" className="w-10 h-10 flex-shrink-0" />
+          <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
+            <img src={astarLogo} alt="ASTAR" className="w-9 h-9 object-contain" />
+          </div>
           {isExpanded && (
             <span className="font-display font-bold text-lg text-foreground animate-fade-in">
               STAR

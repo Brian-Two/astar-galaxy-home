@@ -42,17 +42,41 @@ const Index = () => {
         ))}
       </div>
 
-      {/* Planets */}
-      <div className="fixed inset-0 z-20 pointer-events-none">
-        {subjects.map((subject, index) => (
-          <Planet
-            key={subject.name}
-            subject={subject}
-            orbitRadius={getOrbitRadius(subject.lastActiveDaysAgo)}
-            angle={getPlanetAngle(index, subjects.length)}
-            onSelect={setSelectedSubject}
-          />
-        ))}
+      {/* Planets - Orbiting */}
+      <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-none">
+        {subjects.map((subject, index) => {
+          const orbitRadius = getOrbitRadius(subject.lastActiveDaysAgo);
+          const baseAngle = getPlanetAngle(index, subjects.length);
+          // Slower rotation for outer orbits
+          const duration = 60 + orbitRadius * 0.2;
+          
+          return (
+            <div
+              key={subject.name}
+              className="absolute"
+              style={{
+                width: `${orbitRadius * 2}px`,
+                height: `${orbitRadius * 2}px`,
+                animation: `orbit ${duration}s linear infinite`,
+                animationDelay: `-${(baseAngle / 360) * duration}s`,
+              }}
+            >
+              <div
+                className="absolute pointer-events-auto"
+                style={{
+                  left: '100%',
+                  top: '50%',
+                  transform: 'translate(-50%, -50%)',
+                }}
+              >
+                <Planet
+                  subject={subject}
+                  onSelect={setSelectedSubject}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Subject Panel */}

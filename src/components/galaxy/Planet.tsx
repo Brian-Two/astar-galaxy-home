@@ -3,17 +3,11 @@ import { Subject } from '@/data/subjects';
 
 interface PlanetProps {
   subject: Subject;
-  orbitRadius: number;
-  angle: number;
   onSelect: (subject: Subject) => void;
 }
 
-export const Planet = ({ subject, orbitRadius, angle, onSelect }: PlanetProps) => {
+export const Planet = ({ subject, onSelect }: PlanetProps) => {
   const [isHovered, setIsHovered] = useState(false);
-
-  // Calculate position based on angle and orbit radius
-  const x = Math.cos((angle * Math.PI) / 180) * orbitRadius;
-  const y = Math.sin((angle * Math.PI) / 180) * orbitRadius;
 
   // Planet size based on activity (more recent = slightly larger)
   const baseSize = 40;
@@ -22,11 +16,9 @@ export const Planet = ({ subject, orbitRadius, angle, onSelect }: PlanetProps) =
 
   return (
     <div
-      className="absolute transition-all duration-500 cursor-pointer pointer-events-auto"
+      className="relative transition-all duration-500 cursor-pointer"
       style={{
-        left: `calc(50% + ${x}px)`,
-        top: `calc(50% + ${y}px)`,
-        transform: `translate(-50%, -50%) scale(${isHovered ? 1.2 : 1})`,
+        transform: `scale(${isHovered ? 1.2 : 1})`,
         zIndex: isHovered ? 50 : 10,
       }}
       onMouseEnter={() => setIsHovered(true)}

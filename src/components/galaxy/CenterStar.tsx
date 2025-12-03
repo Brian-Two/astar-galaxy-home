@@ -39,31 +39,57 @@ export const CenterStar = () => {
         }}
       />
 
-      {/* Core star */}
+      {/* Core star shape */}
       <div 
-        className="relative rounded-full transition-all duration-300"
+        className="relative transition-all duration-300"
         style={{
           width: '100px',
           height: '100px',
           marginLeft: '-50px',
           marginTop: '-50px',
-          background: 'radial-gradient(circle at 30% 30%, #34D399 0%, #10B981 40%, #059669 100%)',
-          boxShadow: isHovered 
-            ? '0 0 60px rgba(16, 185, 129, 0.8), 0 0 120px rgba(16, 185, 129, 0.4), inset 0 0 30px rgba(255, 255, 255, 0.3)'
-            : '0 0 40px rgba(16, 185, 129, 0.6), 0 0 80px rgba(16, 185, 129, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.2)',
+          filter: isHovered 
+            ? 'drop-shadow(0 0 30px rgba(16, 185, 129, 0.9)) drop-shadow(0 0 60px rgba(16, 185, 129, 0.5))'
+            : 'drop-shadow(0 0 20px rgba(16, 185, 129, 0.7)) drop-shadow(0 0 40px rgba(16, 185, 129, 0.4))',
         }}
       >
-        {/* Inner highlight */}
-        <div 
-          className="absolute top-3 left-4 w-6 h-6 rounded-full"
+        {/* Star SVG */}
+        <svg
+          viewBox="0 0 100 100"
+          className="w-full h-full"
           style={{
-            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%)',
+            animation: 'pulse-glow 3s ease-in-out infinite',
           }}
-        />
+        >
+          <defs>
+            <linearGradient id="starGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#34D399" />
+              <stop offset="50%" stopColor="#10B981" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <filter id="starGlow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          {/* 5-pointed star */}
+          <polygon
+            points="50,5 61,35 95,35 68,57 79,90 50,70 21,90 32,57 5,35 39,35"
+            fill="url(#starGradient)"
+            filter="url(#starGlow)"
+          />
+          {/* Inner highlight */}
+          <polygon
+            points="50,20 56,38 75,38 60,50 66,68 50,56 34,68 40,50 25,38 44,38"
+            fill="rgba(255,255,255,0.2)"
+          />
+        </svg>
         
         {/* ASTAR text */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-display font-bold text-lg text-white/90 tracking-wide">
+          <span className="font-display font-bold text-lg text-white/90 tracking-wide drop-shadow-lg">
             A★
           </span>
         </div>

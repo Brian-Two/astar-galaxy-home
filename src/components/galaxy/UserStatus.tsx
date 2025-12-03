@@ -7,7 +7,7 @@ interface UserStatusProps {
 
 export const UserStatus = ({ name, points }: UserStatusProps) => {
   return (
-    <div className="fixed top-6 left-6 z-40">
+    <div className="fixed top-6 right-6 z-40">
       <div className="glass-panel p-4">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center">

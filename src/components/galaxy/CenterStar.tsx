@@ -10,17 +10,15 @@ export const CenterStar = () => {
       onClick={() => navigate('/room')}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="relative group cursor-pointer transition-transform duration-500"
+      className="relative group cursor-pointer transition-transform duration-500 flex items-center justify-center"
       style={{ transform: isHovered ? 'scale(1.1)' : 'scale(1)' }}
     >
       {/* Outer glow rings */}
       <div 
-        className="absolute inset-0 rounded-full transition-all duration-500"
+        className="absolute rounded-full transition-all duration-500"
         style={{
           width: isHovered ? '200px' : '180px',
           height: isHovered ? '200px' : '180px',
-          marginLeft: isHovered ? '-100px' : '-90px',
-          marginTop: isHovered ? '-100px' : '-90px',
           background: 'radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%)',
           filter: `blur(${isHovered ? '30px' : '20px'})`,
         }}
@@ -32,8 +30,6 @@ export const CenterStar = () => {
         style={{
           width: '140px',
           height: '140px',
-          marginLeft: '-70px',
-          marginTop: '-70px',
           background: 'radial-gradient(circle, rgba(16, 185, 129, 0.5) 0%, transparent 70%)',
           filter: 'blur(15px)',
         }}
@@ -45,8 +41,6 @@ export const CenterStar = () => {
         style={{
           width: '100px',
           height: '100px',
-          marginLeft: '-50px',
-          marginTop: '-50px',
           filter: isHovered 
             ? 'drop-shadow(0 0 30px rgba(16, 185, 129, 0.9)) drop-shadow(0 0 60px rgba(16, 185, 129, 0.5))'
             : 'drop-shadow(0 0 20px rgba(16, 185, 129, 0.7)) drop-shadow(0 0 40px rgba(16, 185, 129, 0.4))',

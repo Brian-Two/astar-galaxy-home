@@ -86,13 +86,6 @@ export const CenterStar = () => {
             fill="rgba(255,255,255,0.2)"
           />
         </svg>
-        
-        {/* ASTAR text */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-display font-bold text-lg text-white/90 tracking-wide drop-shadow-lg">
-            A★
-          </span>
-        </div>
       </div>
 
       {/* Hover label */}

@@ -4,9 +4,11 @@ import { Subject } from '@/data/subjects';
 interface PlanetProps {
   subject: Subject;
   onSelect: (subject: Subject) => void;
+  orbitDuration: number;
+  animationDelay: number;
 }
 
-export const Planet = ({ subject, onSelect }: PlanetProps) => {
+export const Planet = ({ subject, onSelect, orbitDuration, animationDelay }: PlanetProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   // Planet size based on activity (more recent = slightly larger)
@@ -20,6 +22,8 @@ export const Planet = ({ subject, onSelect }: PlanetProps) => {
       style={{
         transform: `scale(${isHovered ? 1.2 : 1})`,
         zIndex: isHovered ? 50 : 10,
+        animation: `orbit ${orbitDuration}s linear infinite reverse`,
+        animationDelay: `${animationDelay}s`,
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

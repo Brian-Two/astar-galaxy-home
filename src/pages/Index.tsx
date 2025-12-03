@@ -53,25 +53,23 @@ const Index = () => {
           return (
             <div
               key={subject.name}
-              className="absolute"
+              className="absolute origin-center"
               style={{
-                width: `${orbitRadius * 2}px`,
-                height: `${orbitRadius * 2}px`,
                 animation: `orbit ${duration}s linear infinite`,
                 animationDelay: `-${(baseAngle / 360) * duration}s`,
               }}
             >
               <div
-                className="absolute pointer-events-auto"
+                className="pointer-events-auto"
                 style={{
-                  left: '100%',
-                  top: '50%',
-                  transform: 'translate(-50%, -50%)',
+                  transform: `translateX(${orbitRadius}px)`,
                 }}
               >
                 <Planet
                   subject={subject}
                   onSelect={setSelectedSubject}
+                  orbitDuration={duration}
+                  animationDelay={-(baseAngle / 360) * duration}
                 />
               </div>
             </div>

@@ -43,7 +43,7 @@ const Index = () => {
       </div>
 
       {/* Planets */}
-      <div className="fixed inset-0 z-20">
+      <div className="fixed inset-0 z-20 pointer-events-none">
         {subjects.map((subject, index) => (
           <Planet
             key={subject.name}

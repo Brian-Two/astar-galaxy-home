@@ -22,7 +22,7 @@ export const Planet = ({ subject, orbitRadius, angle, onSelect }: PlanetProps) =
 
   return (
     <div
-      className="absolute transition-all duration-500 cursor-pointer"
+      className="absolute transition-all duration-500 cursor-pointer pointer-events-auto"
       style={{
         left: `calc(50% + ${x}px)`,
         top: `calc(50% + ${y}px)`,

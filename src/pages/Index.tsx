@@ -20,15 +20,6 @@ const Index = () => {
       {/* User Status */}
       <UserStatus name="Brian" points={1250} />
 
-      {/* Galaxy Title */}
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 text-center z-30">
-        <h1 className="font-display text-3xl font-bold text-gradient mb-2">
-          Your Learning Galaxy
-        </h1>
-        <p className="text-muted-foreground text-sm max-w-md">
-          Each planet is a subject you've been working on. Keep planets close by doing assignments, studying, and building projects.
-        </p>
-      </div>
 
       {/* Center Star */}
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-20">

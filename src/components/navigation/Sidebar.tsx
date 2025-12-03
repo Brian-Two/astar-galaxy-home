@@ -40,11 +40,11 @@ export const Sidebar = () => {
   };
   
   return (
-    <div className={cn("fixed left-3 top-1/2 -translate-y-1/2 z-50 transition-all duration-300", isExpanded ? "w-40" : "w-10")}>
-      <div className="glass-panel flex flex-col gap-0.5 py-1 px-1">
+    <div className={cn("fixed left-3 top-1/2 -translate-y-1/2 z-50 transition-all duration-300", isExpanded ? "w-44" : "w-12")}>
+      <div className="glass-panel flex flex-col gap-0.5 py-1.5 px-1.5">
         {/* Logo */}
         <button onClick={handleLogoClick} className="flex items-center gap-2 px-1 py-2 rounded-lg transition-colors group">
-          <img src={astarLogo} alt="ASTAR" className="w-7 h-7 flex-shrink-0" />
+          <img src={astarLogo} alt="ASTAR" className="w-8 h-8 flex-shrink-0" />
           {isExpanded && (
             <span className="font-display font-bold text-sm text-foreground animate-fade-in">
               STAR

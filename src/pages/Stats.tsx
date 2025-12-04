@@ -1,4 +1,4 @@
-import { BarChart3, CheckCircle2, BookOpen, Hammer, TrendingUp } from 'lucide-react';
+import { CheckCircle2, BookOpen, Hammer, TrendingUp } from 'lucide-react';
 import { GalaxyBackground } from '@/components/galaxy/GalaxyBackground';
 import { Sidebar } from '@/components/navigation/Sidebar';
 
@@ -32,9 +32,6 @@ const Stats = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12 pt-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
-              <BarChart3 className="w-8 h-8 text-white" />
-            </div>
             <h1 className="font-display text-4xl font-bold text-foreground mb-2">
               Stats
             </h1>

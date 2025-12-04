@@ -6,7 +6,7 @@ import { SubjectPanel } from '@/components/galaxy/SubjectPanel';
 import { UserStatus } from '@/components/galaxy/UserStatus';
 import { Sidebar } from '@/components/navigation/Sidebar';
 import { AddPlanetButton } from '@/components/galaxy/AddPlanetButton';
-import { subjects as initialSubjects, getOrbitRadius, getPlanetAngle, Subject } from '@/data/subjects';
+import { subjects as initialSubjects, getOrbitRadius, getPlanetAngle, orbitRadii, Subject } from '@/data/subjects';
 
 const Index = () => {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -14,6 +14,20 @@ const Index = () => {
 
   const handleAddPlanet = (newSubject: Subject) => {
     setSubjects((prev) => [...prev, newSubject]);
+  };
+
+  const handleDeletePlanet = (subjectName: string) => {
+    setSubjects((prev) => prev.filter((s) => s.name !== subjectName));
+    setSelectedSubject(null);
+  };
+
+  const handleRenamePlanet = (oldName: string, newName: string) => {
+    setSubjects((prev) =>
+      prev.map((s) => (s.name === oldName ? { ...s, name: newName } : s))
+    );
+    if (selectedSubject?.name === oldName) {
+      setSelectedSubject((prev) => (prev ? { ...prev, name: newName } : null));
+    }
   };
 
   return (
@@ -36,7 +50,7 @@ const Index = () => {
 
       {/* Orbit rings (visual guide) */}
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-10">
-        {[140, 220, 320].map((radius, i) => (
+        {orbitRadii.map((radius) => (
           <div
             key={radius}
             className="absolute rounded-full border border-border/20"
@@ -84,12 +98,14 @@ const Index = () => {
       </div>
 
       {/* Add Planet Button */}
-      <AddPlanetButton onAddPlanet={handleAddPlanet} />
+      <AddPlanetButton onAddPlanet={handleAddPlanet} existingSubjects={subjects} />
 
       {/* Subject Panel */}
       <SubjectPanel 
         subject={selectedSubject} 
-        onClose={() => setSelectedSubject(null)} 
+        onClose={() => setSelectedSubject(null)}
+        onDelete={handleDeletePlanet}
+        onRename={handleRenamePlanet}
       />
 
       {/* Bottom hint */}

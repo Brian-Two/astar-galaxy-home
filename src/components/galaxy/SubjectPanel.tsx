@@ -85,36 +85,34 @@ export const SubjectPanel = ({ subject, onClose, onDelete, onRename }: SubjectPa
                 Last active: {subject.lastActiveDaysAgo === 0 ? 'Today' : `${subject.lastActiveDaysAgo} days ago`}
               </p>
             </div>
-            <button 
-              onClick={onClose}
-              className="p-2 hover:bg-muted rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-muted-foreground" />
-            </button>
-          </div>
-
-          {/* Planet Options */}
-          <div className="flex justify-end mb-6">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                  <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card border-border">
-                <DropdownMenuItem onClick={handleRenameClick} className="cursor-pointer">
-                  <Pencil className="w-4 h-4 mr-2" />
-                  Rename
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleDeleteClick} 
-                  className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                    <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-card border-border">
+                  <DropdownMenuItem onClick={handleRenameClick} className="cursor-pointer">
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={handleDeleteClick} 
+                    className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <button 
+                onClick={onClose}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
           </div>
 
           {/* Content */}

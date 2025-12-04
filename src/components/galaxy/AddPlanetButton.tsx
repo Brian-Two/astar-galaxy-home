@@ -18,6 +18,7 @@ import { Subject } from '@/data/subjects';
 
 interface AddPlanetButtonProps {
   onAddPlanet: (subject: Subject) => void;
+  existingSubjects: Subject[];
 }
 
 const planetColors = [
@@ -25,7 +26,7 @@ const planetColors = [
   '#7ED321', '#9013FE', '#F8E71C', '#417505', '#B8E986',
 ];
 
-export const AddPlanetButton = ({ onAddPlanet }: AddPlanetButtonProps) => {
+export const AddPlanetButton = ({ onAddPlanet, existingSubjects }: AddPlanetButtonProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [planetName, setPlanetName] = useState('');
 

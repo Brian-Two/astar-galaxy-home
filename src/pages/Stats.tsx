@@ -68,7 +68,7 @@ const Stats = () => {
               <div className="font-display text-3xl font-bold text-foreground">
                 {stats.streak}
               </div>
-              <div className="text-sm text-muted-foreground">Day Streak 🔥</div>
+              <div className="text-sm text-muted-foreground">Day Streak</div>
             </div>
           </div>
 
@@ -102,7 +102,7 @@ const Stats = () => {
               {stats.totalPoints.toLocaleString()}
             </div>
             <div className="text-muted-foreground">
-              Total Points Earned ⭐
+              Total Points Earned
             </div>
             <p className="text-sm text-muted-foreground/60 mt-2">
               Keep learning to earn more points and unlock customizations!

@@ -17,9 +17,6 @@ const AstarAI = () => {
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12 pt-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center star-glow">
-              <Sparkles className="w-8 h-8 text-primary-foreground" />
-            </div>
             <h1 className="font-display text-4xl font-bold text-foreground mb-2">
               ASTAR.AI
             </h1>

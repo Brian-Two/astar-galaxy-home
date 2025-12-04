@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { LayoutDashboard, Calendar, Clock, ArrowRight } from 'lucide-react';
+import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GalaxyBackground } from '@/components/galaxy/GalaxyBackground';
 import { Sidebar } from '@/components/navigation/Sidebar';
@@ -69,9 +69,6 @@ const Board = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12 pt-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-              <LayoutDashboard className="w-8 h-8 text-white" />
-            </div>
             <h1 className="font-display text-4xl font-bold text-foreground mb-2">
               Board
             </h1>

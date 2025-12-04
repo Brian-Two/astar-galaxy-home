@@ -1,4 +1,4 @@
-import { Compass, Lightbulb, Trophy, ExternalLink } from 'lucide-react';
+import { Lightbulb, Trophy, ExternalLink } from 'lucide-react';
 import { GalaxyBackground } from '@/components/galaxy/GalaxyBackground';
 import { Sidebar } from '@/components/navigation/Sidebar';
 
@@ -36,9 +36,6 @@ const Explore = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12 pt-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-accent to-purple-600 flex items-center justify-center">
-              <Compass className="w-8 h-8 text-accent-foreground" />
-            </div>
             <h1 className="font-display text-4xl font-bold text-foreground mb-2">
               Explore
             </h1>

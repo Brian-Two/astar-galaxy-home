@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Trash2, Pencil } from 'lucide-react';
+import { X, Trash2, Pencil, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Subject } from '@/data/subjects';
@@ -21,6 +21,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface SubjectPanelProps {
   subject: Subject | null;
@@ -88,25 +94,27 @@ export const SubjectPanel = ({ subject, onClose, onDelete, onRename }: SubjectPa
           </div>
 
           {/* Planet Options */}
-          <div className="flex gap-2 mb-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRenameClick}
-              className="flex-1"
-            >
-              <Pencil className="w-4 h-4 mr-2" />
-              Rename
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDeleteClick}
-              className="flex-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
-            </Button>
+          <div className="flex justify-end mb-6">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                  <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card border-border">
+                <DropdownMenuItem onClick={handleRenameClick} className="cursor-pointer">
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleDeleteClick} 
+                  className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Content */}

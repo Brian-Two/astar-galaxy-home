@@ -5,10 +5,16 @@ import { Planet } from '@/components/galaxy/Planet';
 import { SubjectPanel } from '@/components/galaxy/SubjectPanel';
 import { UserStatus } from '@/components/galaxy/UserStatus';
 import { Sidebar } from '@/components/navigation/Sidebar';
-import { subjects, getOrbitRadius, getPlanetAngle, Subject } from '@/data/subjects';
+import { AddPlanetButton } from '@/components/galaxy/AddPlanetButton';
+import { subjects as initialSubjects, getOrbitRadius, getPlanetAngle, Subject } from '@/data/subjects';
 
 const Index = () => {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [subjects, setSubjects] = useState<Subject[]>(initialSubjects);
+
+  const handleAddPlanet = (newSubject: Subject) => {
+    setSubjects((prev) => [...prev, newSubject]);
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -76,6 +82,9 @@ const Index = () => {
           );
         })}
       </div>
+
+      {/* Add Planet Button */}
+      <AddPlanetButton onAddPlanet={handleAddPlanet} />
 
       {/* Subject Panel */}
       <SubjectPanel 

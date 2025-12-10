@@ -25,24 +25,25 @@ export const EndSessionModal = ({ open, onOpenChange, onSubmit }: EndSessionModa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card max-w-md">
+      <DialogContent className="bg-[#0d0e10] border-[#1a1b1e] max-w-md">
         <DialogHeader>
-          <DialogTitle>End Session & Claim Points</DialogTitle>
+          <DialogTitle className="text-[#e0e0e0]">End Session & Claim Points</DialogTitle>
         </DialogHeader>
         <div className="space-y-6 mt-4">
           <div>
-            <label className="text-sm text-muted-foreground mb-2 block">
+            <label className="text-sm text-[#a0a0a0] mb-2 block">
               What did you just work on?
             </label>
             <Input
               value={work}
               onChange={(e) => setWork(e.target.value)}
               placeholder="e.g., Reviewed chapter 5, solved practice problems"
+              className="bg-[#0a0b0d] border-[#2a2b2e] text-[#e0e0e0] placeholder:text-[#6b6b6b]"
             />
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-2 block">
+            <label className="text-sm text-[#a0a0a0] mb-2 block">
               How focused were you?
             </label>
             <div className="flex gap-2">
@@ -53,22 +54,22 @@ export const EndSessionModal = ({ open, onOpenChange, onSubmit }: EndSessionModa
                   className={cn(
                     "flex-1 py-2 rounded-lg border transition-colors text-sm font-medium",
                     focus === n
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-muted/30 text-muted-foreground border-border hover:border-primary/50"
+                      ? "bg-[#2a2b2e] text-[#e0e0e0] border-[#3a3b3e]"
+                      : "bg-[#0a0b0d] text-[#6b6b6b] border-[#1a1b1e] hover:border-[#2a2b2e]"
                   )}
                 >
                   {n}
                 </button>
               ))}
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <div className="flex justify-between text-xs text-[#6b6b6b] mt-1">
               <span>Not focused</span>
               <span>Very focused</span>
             </div>
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-2 block">
+            <label className="text-sm text-[#a0a0a0] mb-2 block">
               How confident do you feel now?
             </label>
             <div className="flex gap-2">
@@ -79,15 +80,15 @@ export const EndSessionModal = ({ open, onOpenChange, onSubmit }: EndSessionModa
                   className={cn(
                     "flex-1 py-2 rounded-lg border transition-colors text-sm font-medium",
                     confidence === n
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-muted/30 text-muted-foreground border-border hover:border-primary/50"
+                      ? "bg-[#2a2b2e] text-[#e0e0e0] border-[#3a3b3e]"
+                      : "bg-[#0a0b0d] text-[#6b6b6b] border-[#1a1b1e] hover:border-[#2a2b2e]"
                   )}
                 >
                   {n}
                 </button>
               ))}
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <div className="flex justify-between text-xs text-[#6b6b6b] mt-1">
               <span>Not confident</span>
               <span>Very confident</span>
             </div>
@@ -95,7 +96,7 @@ export const EndSessionModal = ({ open, onOpenChange, onSubmit }: EndSessionModa
 
           <Button 
             onClick={handleSubmit} 
-            className="w-full"
+            className="w-full bg-[#2a2b2e] hover:bg-[#3a3b3e] text-[#e0e0e0] border border-[#3a3b3e]"
             disabled={!work.trim() || focus === 0 || confidence === 0}
           >
             Claim Points

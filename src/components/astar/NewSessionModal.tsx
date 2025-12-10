@@ -45,24 +45,25 @@ export const NewSessionModal = ({ open, onOpenChange, onSubmit }: NewSessionModa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card max-w-lg">
+      <DialogContent className="bg-[#0d0e10] border-[#1a1b1e] max-w-lg">
         <DialogHeader>
-          <DialogTitle>Start a new session</DialogTitle>
+          <DialogTitle className="text-[#e0e0e0]">Start a new session</DialogTitle>
         </DialogHeader>
         <div className="space-y-6 mt-4">
           <div>
-            <label className="text-sm text-muted-foreground mb-2 block">
+            <label className="text-sm text-[#a0a0a0] mb-2 block">
               Session name
             </label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Midterm 1 Review, Homework 3"
+              className="bg-[#0a0b0d] border-[#2a2b2e] text-[#e0e0e0] placeholder:text-[#6b6b6b]"
             />
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-3 block">
+            <label className="text-sm text-[#a0a0a0] mb-3 block">
               What are you here to do?
             </label>
             <div className="grid gap-3">
@@ -75,27 +76,27 @@ export const NewSessionModal = ({ open, onOpenChange, onSubmit }: NewSessionModa
                     className={cn(
                       "flex items-center gap-4 p-4 rounded-lg border transition-all text-left",
                       intention === opt.value
-                        ? "bg-primary/20 border-primary"
-                        : "bg-muted/30 border-border hover:border-primary/50"
+                        ? "bg-[#1a1b1e] border-[#3a3b3e]"
+                        : "bg-[#0a0b0d] border-[#1a1b1e] hover:border-[#2a2b2e]"
                     )}
                   >
                     <div className={cn(
                       "w-12 h-12 rounded-lg flex items-center justify-center",
-                      intention === opt.value ? "bg-primary/30" : "bg-muted"
+                      intention === opt.value ? "bg-[#2a2b2e]" : "bg-[#1a1b1e]"
                     )}>
                       <Icon className={cn(
                         "w-6 h-6",
-                        intention === opt.value ? "text-primary" : "text-muted-foreground"
+                        intention === opt.value ? "text-[#e0e0e0]" : "text-[#6b6b6b]"
                       )} />
                     </div>
                     <div>
                       <h4 className={cn(
                         "font-medium",
-                        intention === opt.value ? "text-primary" : "text-foreground"
+                        intention === opt.value ? "text-[#e0e0e0]" : "text-[#a0a0a0]"
                       )}>
                         {opt.label}
                       </h4>
-                      <p className="text-sm text-muted-foreground">{opt.description}</p>
+                      <p className="text-sm text-[#6b6b6b]">{opt.description}</p>
                     </div>
                   </button>
                 );
@@ -105,7 +106,7 @@ export const NewSessionModal = ({ open, onOpenChange, onSubmit }: NewSessionModa
 
           <Button 
             onClick={handleSubmit} 
-            className="w-full"
+            className="w-full bg-[#2a2b2e] hover:bg-[#3a3b3e] text-[#e0e0e0] border border-[#3a3b3e]"
             disabled={!name.trim() || !intention}
           >
             Start Session

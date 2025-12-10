@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { GlobalNav } from '@/components/astar/GlobalNav';
+import { Sidebar } from '@/components/navigation/Sidebar';
 import { WorkstationSidebar } from '@/components/astar/WorkstationSidebar';
 import { SessionHeaderNeutral } from '@/components/astar/SessionHeaderNeutral';
 import { ChatPanelNeutral } from '@/components/astar/ChatPanelNeutral';
@@ -141,39 +141,43 @@ const AstarAI = () => {
   };
 
   return (
-    <div className="h-screen flex bg-[#050608]">
-      {/* Global App Navigation */}
-      <GlobalNav />
+    <div className="min-h-screen bg-background">
+      {/* Global App Navigation - existing ASTAR sidebar */}
+      <Sidebar />
 
-      {/* Workstation Sidebar */}
-      <WorkstationSidebar
-        spaces={spaces}
-        sources={sources}
-        members={initialMembers}
-        onSpaceSelect={handleSpaceSelect}
-        onNewSession={() => setNewSessionOpen(true)}
-        onAddSource={handleAddSource}
-        onUseInPrompt={handleUseInPrompt}
-        subjectColor={subjectColor}
-      />
-
-      {/* Main Work Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <SessionHeaderNeutral
-          subjectName={subject}
-          currentSpace={currentSpace}
-          stats={stats}
-          onEndSession={() => setEndSessionOpen(true)}
+      {/* Main content with left padding for sidebar */}
+      <div className="pl-24 flex h-screen">
+        {/* Workstation Sidebar */}
+        <WorkstationSidebar
+          spaces={spaces}
+          sources={sources}
+          members={initialMembers}
+          onSpaceSelect={handleSpaceSelect}
+          onNewSession={() => setNewSessionOpen(true)}
+          onAddSource={handleAddSource}
+          onUseInPrompt={handleUseInPrompt}
           subjectColor={subjectColor}
+          spaceName={currentSpace?.name || 'Select a space'}
         />
 
-        <ChatPanelNeutral
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          currentSpace={currentSpace}
-          onPromptClick={handlePromptClick}
-          subjectColor={subjectColor}
-        />
+        {/* Main Work Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <SessionHeaderNeutral
+            subjectName={subject}
+            currentSpace={currentSpace}
+            stats={stats}
+            onEndSession={() => setEndSessionOpen(true)}
+            subjectColor={subjectColor}
+          />
+
+          <ChatPanelNeutral
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            currentSpace={currentSpace}
+            onPromptClick={handlePromptClick}
+            subjectColor={subjectColor}
+          />
+        </div>
       </div>
 
       <EndSessionModal

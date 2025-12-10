@@ -1,18 +1,29 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { SessionHeader } from '@/components/astar/SessionHeader';
-import { SpacesSidebar } from '@/components/astar/SpacesSidebar';
-import { ChatPanel } from '@/components/astar/ChatPanel';
-import { RightPanel } from '@/components/astar/RightPanel';
+import { GlobalNav } from '@/components/astar/GlobalNav';
+import { WorkstationSidebar } from '@/components/astar/WorkstationSidebar';
+import { SessionHeaderNeutral } from '@/components/astar/SessionHeaderNeutral';
+import { ChatPanelNeutral } from '@/components/astar/ChatPanelNeutral';
 import { EndSessionModal } from '@/components/astar/EndSessionModal';
 import { NewSessionModal } from '@/components/astar/NewSessionModal';
 import { Space, Source, Member, Message, SessionStats } from '@/components/astar/types';
 
+// Subject colors - each subject gets its own accent color
+const subjectColors: Record<string, string> = {
+  'Physics 101': '#FF6B6B',
+  'English': '#FF6B6B',
+  'Math': '#4ECDC4',
+  'Chemistry': '#45B7D1',
+  'History': '#96CEB4',
+  'Biology': '#FFEAA7',
+  'default': '#FF6B6B'
+};
+
 const initialSpaces: Space[] = [
-  { id: 'midterm-review', name: 'Midterm 1 Review', active: true, intention: 'study' },
+  { id: 'midterm-review', name: 'Midterm 1 Review', active: false, intention: 'study' },
   { id: 'hw3-vectors', name: 'Homework 3 – Vectors', active: false, intention: 'homework' },
-  { id: 'final-project', name: 'Final Project Ideas', active: false, intention: 'project' },
+  { id: 'final-project', name: 'Final Project Ideas', active: true, intention: 'project' },
 ];
 
 const initialSources: Source[] = [
@@ -50,6 +61,7 @@ const initialMessages: Message[] = [
 const AstarAI = () => {
   const [searchParams] = useSearchParams();
   const subject = searchParams.get('subject') || 'Physics 101';
+  const subjectColor = subjectColors[subject] || subjectColors.default;
 
   const [spaces, setSpaces] = useState<Space[]>(initialSpaces);
   const [sources, setSources] = useState<Source[]>(initialSources);
@@ -59,7 +71,6 @@ const AstarAI = () => {
     sessionXP: 40,
     maxSessionXP: 100
   });
-  const [chatInput, setChatInput] = useState('');
   const [endSessionOpen, setEndSessionOpen] = useState(false);
   const [newSessionOpen, setNewSessionOpen] = useState(false);
 
@@ -79,11 +90,10 @@ const AstarAI = () => {
       content
     };
     
-    // Fake AI response
     const aiMsg: Message = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
-      content: `(AI response placeholder using your sources...)\n\nBased on the materials in your space, here's my response to "${content.slice(0, 50)}${content.length > 50 ? '...' : ''}":\n\nThis is where ASTAR.AI would provide a helpful, grounded response using the sources you've added to this space.`
+      content: `Based on the materials in your space, here's my response to "${content.slice(0, 50)}${content.length > 50 ? '...' : ''}":\n\nThis is where ASTAR.AI would provide a helpful, grounded response using the sources you've added to this space.`
     };
 
     setMessages([...messages, userMsg, aiMsg]);
@@ -131,36 +141,39 @@ const AstarAI = () => {
   };
 
   return (
-    <div className="relative h-screen overflow-hidden bg-background">
-      <div className="relative z-10 h-screen flex flex-col">
-        <SessionHeader
+    <div className="h-screen flex bg-[#050608]">
+      {/* Global App Navigation */}
+      <GlobalNav />
+
+      {/* Workstation Sidebar */}
+      <WorkstationSidebar
+        spaces={spaces}
+        sources={sources}
+        members={initialMembers}
+        onSpaceSelect={handleSpaceSelect}
+        onNewSession={() => setNewSessionOpen(true)}
+        onAddSource={handleAddSource}
+        onUseInPrompt={handleUseInPrompt}
+        subjectColor={subjectColor}
+      />
+
+      {/* Main Work Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <SessionHeaderNeutral
           subjectName={subject}
           currentSpace={currentSpace}
           stats={stats}
           onEndSession={() => setEndSessionOpen(true)}
+          subjectColor={subjectColor}
         />
 
-        <div className="flex-1 flex overflow-hidden">
-          <SpacesSidebar
-            spaces={spaces}
-            onSpaceSelect={handleSpaceSelect}
-            onNewSession={() => setNewSessionOpen(true)}
-          />
-
-          <ChatPanel
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            currentSpace={currentSpace}
-            onPromptClick={handlePromptClick}
-          />
-
-          <RightPanel
-            sources={sources}
-            members={initialMembers}
-            onAddSource={handleAddSource}
-            onUseInPrompt={handleUseInPrompt}
-          />
-        </div>
+        <ChatPanelNeutral
+          messages={messages}
+          onSendMessage={handleSendMessage}
+          currentSpace={currentSpace}
+          onPromptClick={handlePromptClick}
+          subjectColor={subjectColor}
+        />
       </div>
 
       <EndSessionModal

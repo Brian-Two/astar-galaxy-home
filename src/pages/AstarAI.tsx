@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { GalaxyBackground } from '@/components/galaxy/GalaxyBackground';
 import { SessionHeader } from '@/components/astar/SessionHeader';
 import { SpacesSidebar } from '@/components/astar/SpacesSidebar';
 import { ChatPanel } from '@/components/astar/ChatPanel';
@@ -132,9 +131,7 @@ const AstarAI = () => {
   };
 
   return (
-    <div className="relative h-screen overflow-hidden">
-      <GalaxyBackground />
-      
+    <div className="relative h-screen overflow-hidden bg-background">
       <div className="relative z-10 h-screen flex flex-col">
         <SessionHeader
           subjectName={subject}

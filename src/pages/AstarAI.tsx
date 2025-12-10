@@ -157,7 +157,7 @@ const AstarAI = () => {
           onAddSource={handleAddSource}
           onUseInPrompt={handleUseInPrompt}
           subjectColor={subjectColor}
-          spaceName={currentSpace?.name || 'Select a space'}
+          subjectName={subject}
         />
 
         {/* Main Work Area */}

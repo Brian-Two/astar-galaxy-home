@@ -17,7 +17,7 @@ interface WorkstationSidebarProps {
   onAddSource: (source: Omit<Source, 'id'>) => void;
   onUseInPrompt: (title: string) => void;
   subjectColor: string;
-  spaceName: string;
+  subjectName: string;
 }
 
 type TabType = 'members' | 'sources';
@@ -37,7 +37,7 @@ export const WorkstationSidebar = ({
   onAddSource,
   onUseInPrompt,
   subjectColor,
-  spaceName
+  subjectName
 }: WorkstationSidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('members');
@@ -88,12 +88,12 @@ export const WorkstationSidebar = ({
 
   return (
     <div className="w-72 glass-panel border-r border-border/30 flex flex-col rounded-none">
-      {/* Space name header */}
+      {/* Subject name header */}
       <div className="p-4 border-b border-border/30 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FolderOpen className="w-4 h-4" style={{ color: subjectColor }} />
-          <span className="text-sm font-medium" style={{ color: subjectColor }}>
-            {spaceName}
+          <span className="text-lg font-semibold" style={{ color: subjectColor }}>
+            {subjectName}
           </span>
         </div>
         <button

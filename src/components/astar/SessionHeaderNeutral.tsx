@@ -83,9 +83,6 @@ export const SessionHeaderNeutral = ({
           <span className="px-3 py-1 rounded-full bg-secondary text-foreground text-sm font-medium border border-border/30">
             {intentionInfo.label}
           </span>
-          <span className="text-xs text-muted-foreground mt-1 max-w-md text-center">
-            {intentionInfo.subtitle}
-          </span>
         </div>
 
         {/* Right side */}

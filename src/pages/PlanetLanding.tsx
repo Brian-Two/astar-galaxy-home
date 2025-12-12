@@ -262,7 +262,7 @@ const PlanetLanding = () => {
           <div
             className="rounded-[50%] border-t border-slate-700/50"
             style={{
-              width: '180%',
+              width: '250%',
               height: '400px',
               marginBottom: '-200px',
               background: `

@@ -162,17 +162,11 @@ const PlanetLanding = () => {
           </button>
         </div>
 
-        {/* Orbiting planets - BACK layer (behind sun) */}
-        <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+        {/* Sky with distant star and orbiting planets */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          {/* Orbiting planets - z-10, behind the sun */}
           {otherPlanets.map((planet, i) => {
             const angle = orbitAngles[i] || planet.startAngle;
-            // Normalize angle to 0-2π
-            const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-            // Back half: right side of orbit (angle between 0 to π/2 and 3π/2 to 2π)
-            const isBack = normalizedAngle < Math.PI / 2 || normalizedAngle > (3 * Math.PI) / 2;
-            
-            if (!isBack) return null;
-            
             const centerX = 50;
             const centerY = 28;
             const x = centerX + Math.cos(angle) * (planet.orbitRadius / 10);
@@ -181,7 +175,7 @@ const PlanetLanding = () => {
             return (
               <div
                 key={planet.id}
-                className="absolute transition-all duration-100"
+                className="absolute transition-all duration-100 z-10"
                 style={{
                   left: `${x}%`,
                   top: `${y}%`,
@@ -189,75 +183,38 @@ const PlanetLanding = () => {
                 }}
               >
                 <div
-                  className="rounded-full opacity-60"
+                  className="rounded-full"
                   style={{
                     width: `${planet.size}px`,
                     height: `${planet.size}px`,
-                    background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6) 0%, ${planet.color} 35%, ${planet.color} 100%)`,
-                    boxShadow: `0 0 12px ${planet.color}40`,
-                    filter: 'blur(0.5px)',
+                    background: `radial-gradient(circle at 30% 30%, ${planet.color}cc, ${planet.color}88)`,
+                    filter: 'blur(1px)',
+                    opacity: 0.7,
+                    boxShadow: `0 0 15px ${planet.color}50`,
                   }}
                 />
               </div>
             );
           })}
-        </div>
 
-        {/* Distant green star/sun - middle layer */}
-        <div className="absolute inset-0 flex items-start justify-center pointer-events-none z-20" style={{ paddingTop: '18%' }}>
+          {/* Distant green star/sun - z-20, in front of orbiting planets */}
           <div
-            className="w-32 h-32 rounded-full"
-            style={{
-              background: 'radial-gradient(circle, #34d399 0%, #10b981 40%, rgba(16,185,129,0.25) 70%, transparent 100%)',
-              filter: 'blur(3px)',
-              boxShadow: '0 0 60px rgba(52,211,153,0.4), 0 0 100px rgba(16,185,129,0.2)',
-            }}
-          />
-        </div>
-
-        {/* Orbiting planets - FRONT layer (in front of sun) */}
-        <div className="absolute inset-0 z-[25] pointer-events-none overflow-hidden">
-          {otherPlanets.map((planet, i) => {
-            const angle = orbitAngles[i] || planet.startAngle;
-            // Normalize angle to 0-2π
-            const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-            // Front half: left side of orbit (angle between π/2 and 3π/2)
-            const isFront = normalizedAngle >= Math.PI / 2 && normalizedAngle <= (3 * Math.PI) / 2;
-            
-            if (!isFront) return null;
-            
-            const centerX = 50;
-            const centerY = 28;
-            const x = centerX + Math.cos(angle) * (planet.orbitRadius / 10);
-            const y = centerY + Math.sin(angle) * (planet.orbitRadius / 20);
-            
-            return (
-              <div
-                key={planet.id}
-                className="absolute transition-all duration-100"
-                style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <div
-                  className="rounded-full opacity-60"
-                  style={{
-                    width: `${planet.size}px`,
-                    height: `${planet.size}px`,
-                    background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6) 0%, ${planet.color} 35%, ${planet.color} 100%)`,
-                    boxShadow: `0 0 12px ${planet.color}40`,
-                    filter: 'blur(0.5px)',
-                  }}
-                />
-              </div>
-            );
-          })}
+            className="absolute left-1/2 -translate-x-1/2 z-20"
+            style={{ top: '18%' }}
+          >
+            <div
+              className="w-28 h-28 rounded-full"
+              style={{
+                background: 'radial-gradient(circle, #34d399 0%, #10b981 40%, rgba(16,185,129,0.25) 70%, transparent 100%)',
+                filter: 'blur(3px)',
+                opacity: 0.7,
+              }}
+            />
+          </div>
         </div>
 
         {/* Tool icons - positioned above the surface */}
-        <div className="absolute left-1/2 -translate-x-1/2 z-50" style={{ bottom: '28%' }}>
+        <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '28%' }}>
           <div className="flex items-center gap-10">
             {(Object.entries(toolInfo) as [string, typeof toolInfo.sources][]).map(([key, tool]) => {
               const Icon = tool.icon;
@@ -300,24 +257,37 @@ const PlanetLanding = () => {
           </div>
         </div>
 
-        {/* Curved planet surface - smooth gradient like reference */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-30 overflow-visible" style={{ height: '35%' }}>
+        {/* Curved planet surface - shallower curve */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 flex justify-center overflow-hidden" style={{ height: '30%' }}>
           <div
-            className="rounded-[50%]"
+            className="rounded-[50%] border-t border-slate-700/50"
             style={{
-              width: '180vw',
-              height: '500px',
-              marginBottom: '-280px',
+              width: '140%',
+              height: '400px',
+              marginBottom: '-200px',
               background: `
-                radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.08) 0%, transparent 40%),
-                linear-gradient(180deg, ${subject.color} 0%, ${subject.color}dd 50%, ${subject.color}cc 100%)
+                radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.1) 0%, transparent 40%),
+                radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.06) 0%, transparent 35%),
+                radial-gradient(ellipse at 50% 0%, ${subject.color}90 0%, ${subject.color}70 30%, ${subject.color}50 60%, ${subject.color}40 100%)
               `,
-              boxShadow: `
-                inset 0 15px 50px rgba(255,255,255,0.1),
-                0 -10px 30px rgba(0,0,0,0.3)
-              `,
+              boxShadow: `inset 0 30px 80px ${subject.color}30, 0 -20px 60px rgba(0,0,0,0.5)`,
             }}
-          />
+          >
+            {/* Surface texture - crater-like dots */}
+            <div
+              className="absolute inset-0 rounded-[50%] opacity-30 pointer-events-none"
+              style={{
+                backgroundImage: `
+                  radial-gradient(circle at 20% 15%, rgba(0,0,0,0.3) 0%, transparent 8%),
+                  radial-gradient(circle at 65% 25%, rgba(0,0,0,0.2) 0%, transparent 5%),
+                  radial-gradient(circle at 40% 20%, rgba(0,0,0,0.25) 0%, transparent 6%),
+                  radial-gradient(circle at 80% 18%, rgba(0,0,0,0.2) 0%, transparent 4%),
+                  radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)
+                `,
+                backgroundSize: '100% 100%, 100% 100%, 100% 100%, 100% 100%, 20px 20px',
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

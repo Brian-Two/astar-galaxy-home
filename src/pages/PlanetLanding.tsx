@@ -257,7 +257,7 @@ const PlanetLanding = () => {
         </div>
 
         {/* Tool icons - positioned above the surface */}
-        <div className="absolute left-1/2 -translate-x-1/2 z-40" style={{ bottom: '28%' }}>
+        <div className="absolute left-1/2 -translate-x-1/2 z-50" style={{ bottom: '28%' }}>
           <div className="flex items-center gap-10">
             {(Object.entries(toolInfo) as [string, typeof toolInfo.sources][]).map(([key, tool]) => {
               const Icon = tool.icon;
@@ -300,53 +300,24 @@ const PlanetLanding = () => {
           </div>
         </div>
 
-        {/* Curved planet surface - pearlescent texture */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-50 overflow-visible" style={{ height: '32%' }}>
+        {/* Curved planet surface - smooth gradient like reference */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-30 overflow-visible" style={{ height: '35%' }}>
           <div
-            className="rounded-[50%] border-t border-white/10"
+            className="rounded-[50%]"
             style={{
               width: '180vw',
               height: '500px',
               marginBottom: '-280px',
               background: `
-                radial-gradient(ellipse at 25% 5%, rgba(255,255,255,0.25) 0%, transparent 30%),
-                radial-gradient(ellipse at 75% 8%, rgba(255,255,255,0.15) 0%, transparent 25%),
-                radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.2) 0%, transparent 20%),
-                radial-gradient(ellipse at 40% 15%, ${subject.color}dd 0%, transparent 50%),
-                radial-gradient(ellipse at 60% 12%, ${subject.color}cc 0%, transparent 45%),
-                linear-gradient(180deg, ${subject.color}ee 0%, ${subject.color} 40%, ${subject.color}dd 100%)
+                radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.08) 0%, transparent 40%),
+                linear-gradient(180deg, ${subject.color} 0%, ${subject.color}dd 50%, ${subject.color}cc 100%)
               `,
               boxShadow: `
-                inset 0 20px 60px rgba(255,255,255,0.15),
-                inset 0 -20px 60px ${subject.color}40,
-                0 -15px 40px rgba(0,0,0,0.4)
+                inset 0 15px 50px rgba(255,255,255,0.1),
+                0 -10px 30px rgba(0,0,0,0.3)
               `,
             }}
-          >
-            {/* Pearlescent shimmer overlay */}
-            <div
-              className="absolute inset-0 rounded-[50%] pointer-events-none"
-              style={{
-                background: `
-                  radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.12) 0%, transparent 35%),
-                  radial-gradient(ellipse at 70% 15%, rgba(255,255,255,0.08) 0%, transparent 30%),
-                  radial-gradient(ellipse at 50% 5%, rgba(255,255,255,0.1) 0%, transparent 25%)
-                `,
-              }}
-            />
-            {/* Subtle crater texture */}
-            <div
-              className="absolute inset-0 rounded-[50%] opacity-20 pointer-events-none"
-              style={{
-                backgroundImage: `
-                  radial-gradient(circle at 20% 12%, rgba(0,0,0,0.25) 0%, transparent 6%),
-                  radial-gradient(circle at 55% 18%, rgba(0,0,0,0.2) 0%, transparent 4%),
-                  radial-gradient(circle at 75% 10%, rgba(0,0,0,0.15) 0%, transparent 5%),
-                  radial-gradient(circle at 35% 22%, rgba(0,0,0,0.18) 0%, transparent 3%)
-                `,
-              }}
-            />
-          </div>
+          />
         </div>
       </div>
     </div>

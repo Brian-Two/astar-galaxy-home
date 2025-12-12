@@ -162,10 +162,17 @@ const PlanetLanding = () => {
           </button>
         </div>
 
-        {/* Orbiting planets - behind the sun */}
+        {/* Orbiting planets - BACK layer (behind sun) */}
         <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
           {otherPlanets.map((planet, i) => {
             const angle = orbitAngles[i] || planet.startAngle;
+            // Normalize angle to 0-2π
+            const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+            // Back half: right side of orbit (angle between 0 to π/2 and 3π/2 to 2π)
+            const isBack = normalizedAngle < Math.PI / 2 || normalizedAngle > (3 * Math.PI) / 2;
+            
+            if (!isBack) return null;
+            
             const centerX = 50;
             const centerY = 28;
             const x = centerX + Math.cos(angle) * (planet.orbitRadius / 10);
@@ -182,12 +189,13 @@ const PlanetLanding = () => {
                 }}
               >
                 <div
-                  className="rounded-full"
+                  className="rounded-full opacity-60"
                   style={{
                     width: `${planet.size}px`,
                     height: `${planet.size}px`,
-                    background: `radial-gradient(circle at 30% 30%, #ffffff 0%, ${planet.color} 40%, ${planet.color} 100%)`,
-                    boxShadow: `0 0 15px ${planet.color}50`,
+                    background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6) 0%, ${planet.color} 35%, ${planet.color} 100%)`,
+                    boxShadow: `0 0 12px ${planet.color}40`,
+                    filter: 'blur(0.5px)',
                   }}
                 />
               </div>
@@ -195,7 +203,7 @@ const PlanetLanding = () => {
           })}
         </div>
 
-        {/* Distant green star/sun - in front of orbiting planets */}
+        {/* Distant green star/sun - middle layer */}
         <div className="absolute inset-0 flex items-start justify-center pointer-events-none z-20" style={{ paddingTop: '18%' }}>
           <div
             className="w-32 h-32 rounded-full"
@@ -207,8 +215,49 @@ const PlanetLanding = () => {
           />
         </div>
 
+        {/* Orbiting planets - FRONT layer (in front of sun) */}
+        <div className="absolute inset-0 z-[25] pointer-events-none overflow-hidden">
+          {otherPlanets.map((planet, i) => {
+            const angle = orbitAngles[i] || planet.startAngle;
+            // Normalize angle to 0-2π
+            const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+            // Front half: left side of orbit (angle between π/2 and 3π/2)
+            const isFront = normalizedAngle >= Math.PI / 2 && normalizedAngle <= (3 * Math.PI) / 2;
+            
+            if (!isFront) return null;
+            
+            const centerX = 50;
+            const centerY = 28;
+            const x = centerX + Math.cos(angle) * (planet.orbitRadius / 10);
+            const y = centerY + Math.sin(angle) * (planet.orbitRadius / 20);
+            
+            return (
+              <div
+                key={planet.id}
+                className="absolute transition-all duration-100"
+                style={{
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+              >
+                <div
+                  className="rounded-full opacity-60"
+                  style={{
+                    width: `${planet.size}px`,
+                    height: `${planet.size}px`,
+                    background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6) 0%, ${planet.color} 35%, ${planet.color} 100%)`,
+                    boxShadow: `0 0 12px ${planet.color}40`,
+                    filter: 'blur(0.5px)',
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+
         {/* Tool icons - positioned above the surface */}
-        <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '28%' }}>
+        <div className="absolute left-1/2 -translate-x-1/2 z-40" style={{ bottom: '28%' }}>
           <div className="flex items-center gap-10">
             {(Object.entries(toolInfo) as [string, typeof toolInfo.sources][]).map(([key, tool]) => {
               const Icon = tool.icon;
@@ -251,34 +300,50 @@ const PlanetLanding = () => {
           </div>
         </div>
 
-        {/* Curved planet surface - shallower curve, fills bottom completely */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-30 overflow-visible" style={{ height: '32%' }}>
+        {/* Curved planet surface - pearlescent texture */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-50 overflow-visible" style={{ height: '32%' }}>
           <div
-            className="rounded-[50%] border-t border-slate-700/50"
+            className="rounded-[50%] border-t border-white/10"
             style={{
               width: '180vw',
               height: '500px',
               marginBottom: '-280px',
               background: `
-                radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.1) 0%, transparent 40%),
-                radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.06) 0%, transparent 35%),
-                radial-gradient(ellipse at 50% 0%, ${subject.color} 0%, ${subject.color} 30%, ${subject.color} 60%, ${subject.color} 100%)
+                radial-gradient(ellipse at 25% 5%, rgba(255,255,255,0.25) 0%, transparent 30%),
+                radial-gradient(ellipse at 75% 8%, rgba(255,255,255,0.15) 0%, transparent 25%),
+                radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.2) 0%, transparent 20%),
+                radial-gradient(ellipse at 40% 15%, ${subject.color}dd 0%, transparent 50%),
+                radial-gradient(ellipse at 60% 12%, ${subject.color}cc 0%, transparent 45%),
+                linear-gradient(180deg, ${subject.color}ee 0%, ${subject.color} 40%, ${subject.color}dd 100%)
               `,
-              boxShadow: `inset 0 30px 80px ${subject.color}30, 0 -20px 60px rgba(0,0,0,0.5)`,
+              boxShadow: `
+                inset 0 20px 60px rgba(255,255,255,0.15),
+                inset 0 -20px 60px ${subject.color}40,
+                0 -15px 40px rgba(0,0,0,0.4)
+              `,
             }}
           >
-            {/* Surface texture - crater-like dots */}
+            {/* Pearlescent shimmer overlay */}
             <div
-              className="absolute inset-0 rounded-[50%] opacity-30 pointer-events-none"
+              className="absolute inset-0 rounded-[50%] pointer-events-none"
+              style={{
+                background: `
+                  radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.12) 0%, transparent 35%),
+                  radial-gradient(ellipse at 70% 15%, rgba(255,255,255,0.08) 0%, transparent 30%),
+                  radial-gradient(ellipse at 50% 5%, rgba(255,255,255,0.1) 0%, transparent 25%)
+                `,
+              }}
+            />
+            {/* Subtle crater texture */}
+            <div
+              className="absolute inset-0 rounded-[50%] opacity-20 pointer-events-none"
               style={{
                 backgroundImage: `
-                  radial-gradient(circle at 20% 15%, rgba(0,0,0,0.3) 0%, transparent 8%),
-                  radial-gradient(circle at 65% 25%, rgba(0,0,0,0.2) 0%, transparent 5%),
-                  radial-gradient(circle at 40% 20%, rgba(0,0,0,0.25) 0%, transparent 6%),
-                  radial-gradient(circle at 80% 18%, rgba(0,0,0,0.2) 0%, transparent 4%),
-                  radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)
+                  radial-gradient(circle at 20% 12%, rgba(0,0,0,0.25) 0%, transparent 6%),
+                  radial-gradient(circle at 55% 18%, rgba(0,0,0,0.2) 0%, transparent 4%),
+                  radial-gradient(circle at 75% 10%, rgba(0,0,0,0.15) 0%, transparent 5%),
+                  radial-gradient(circle at 35% 22%, rgba(0,0,0,0.18) 0%, transparent 3%)
                 `,
-                backgroundSize: '100% 100%, 100% 100%, 100% 100%, 100% 100%, 20px 20px',
               }}
             />
           </div>

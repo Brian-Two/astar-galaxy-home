@@ -258,13 +258,12 @@ const PlanetLanding = () => {
         </div>
 
         {/* Curved planet surface - shallower curve */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 overflow-hidden" style={{ height: '25%' }}>
+        <div className="absolute -bottom-[300px] left-1/2 -translate-x-1/2 z-10">
           <div
-            className="rounded-[50%] border-t border-slate-700/50"
+            className="rounded-full border-t border-slate-700/50"
             style={{
-              width: '280%',
+              width: '300vw',
               height: '500px',
-              marginBottom: '-320px',
               background: `
                 radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.1) 0%, transparent 40%),
                 radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.06) 0%, transparent 35%),

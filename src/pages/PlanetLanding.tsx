@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Users, BookOpen, Monitor, ArrowLeft } from 'lucide-react';
+import { Users, BookOpen, Monitor, ChevronUp } from 'lucide-react';
 import { subjects } from '@/data/subjects';
+import { Sidebar } from '@/components/navigation/Sidebar';
+import { UserStatus } from '@/components/galaxy/UserStatus';
 
 interface OtherPlanet {
   id: string;
@@ -132,150 +134,160 @@ const PlanetLanding = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background overflow-hidden relative">
-      {/* Stars canvas */}
-      <canvas
-        ref={canvasRef}
-        className="fixed inset-0 pointer-events-none z-0"
-        style={{ background: 'linear-gradient(180deg, hsl(230, 35%, 4%) 0%, hsl(230, 35%, 8%) 60%, hsl(230, 35%, 12%) 100%)' }}
-      />
+    <div className="min-h-screen flex w-full bg-background overflow-hidden relative">
+      {/* Global Sidebar */}
+      <Sidebar />
 
-      {/* Back arrow - top left */}
-      <div className="absolute top-6 left-6 z-30">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
-        >
-          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-medium">Galaxy</span>
-        </button>
-      </div>
+      {/* Main content area */}
+      <div className="flex-1 relative">
+        {/* Stars canvas */}
+        <canvas
+          ref={canvasRef}
+          className="fixed inset-0 pointer-events-none z-0"
+          style={{ background: 'linear-gradient(180deg, hsl(230, 35%, 4%) 0%, hsl(230, 35%, 8%) 60%, hsl(230, 35%, 12%) 100%)' }}
+        />
 
-      {/* Sky with distant star and orbiting planets */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Distant green star/sun - soft glow */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2"
-          style={{ top: '18%' }}
-        >
-          <div
-            className="w-28 h-28 rounded-full"
-            style={{
-              background: 'radial-gradient(circle, #34d399 0%, #10b981 40%, rgba(16,185,129,0.25) 70%, transparent 100%)',
-              filter: 'blur(3px)',
-              opacity: 0.7,
-            }}
-          />
+        {/* User status - top right */}
+        <div className="absolute top-0 right-0 z-30">
+          <UserStatus name="Explorer" points={1240} />
         </div>
 
-        {/* Orbiting planets - no labels */}
-        {otherPlanets.map((planet, i) => {
-          const angle = orbitAngles[i] || planet.startAngle;
-          const centerX = 50;
-          const centerY = 28;
-          const x = centerX + Math.cos(angle) * (planet.orbitRadius / 10);
-          const y = centerY + Math.sin(angle) * (planet.orbitRadius / 20);
-          
-          return (
-            <div
-              key={planet.id}
-              className="absolute transition-all duration-100"
-              style={{
-                left: `${x}%`,
-                top: `${y}%`,
-                transform: 'translate(-50%, -50%)',
-              }}
-            >
-              <div
-                className="rounded-full"
-                style={{
-                  width: `${planet.size}px`,
-                  height: `${planet.size}px`,
-                  background: `radial-gradient(circle at 30% 30%, ${planet.color}cc, ${planet.color}88)`,
-                  filter: 'blur(1px)',
-                  opacity: 0.7,
-                  boxShadow: `0 0 15px ${planet.color}50`,
-                }}
-              />
-            </div>
-          );
-        })}
-      </div>
+        {/* Centered up arrow - top center */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
+          <button
+            onClick={() => navigate('/')}
+            className="p-2 rounded-full text-muted-foreground hover:text-emerald-400 hover:bg-slate-800/50 transition-all duration-200 hover:shadow-[0_0_15px_rgba(52,211,153,0.3)]"
+          >
+            <ChevronUp className="w-6 h-6" />
+          </button>
+        </div>
 
-      {/* Tool icons - positioned above the surface */}
-      <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '38%' }}>
-        <div className="flex items-center gap-10">
-          {(Object.entries(toolInfo) as [string, typeof toolInfo.sources][]).map(([key, tool]) => {
-            const Icon = tool.icon;
-            const isHovered = hoveredTool === key;
+        {/* Sky with distant star and orbiting planets */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          {/* Orbiting planets - z-10, behind the sun */}
+          {otherPlanets.map((planet, i) => {
+            const angle = orbitAngles[i] || planet.startAngle;
+            const centerX = 50;
+            const centerY = 28;
+            const x = centerX + Math.cos(angle) * (planet.orbitRadius / 10);
+            const y = centerY + Math.sin(angle) * (planet.orbitRadius / 20);
             
             return (
-              <div key={key} className="relative">
-                <button
-                  onClick={() => handleToolClick(key)}
-                  onMouseEnter={() => setHoveredTool(key)}
-                  onMouseLeave={() => setHoveredTool(null)}
-                  className="w-16 h-16 rounded-full bg-slate-900/90 border border-slate-700 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:-translate-y-1"
+              <div
+                key={planet.id}
+                className="absolute transition-all duration-100 z-10"
+                style={{
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+              >
+                <div
+                  className="rounded-full"
                   style={{
-                    boxShadow: isHovered 
-                      ? `0 0 20px ${subject.color}60, 0 8px 30px rgba(0,0,0,0.4)` 
-                      : '0 4px 20px rgba(0,0,0,0.3)',
-                    borderColor: isHovered ? subject.color : undefined,
+                    width: `${planet.size}px`,
+                    height: `${planet.size}px`,
+                    background: `radial-gradient(circle at 30% 30%, ${planet.color}cc, ${planet.color}88)`,
+                    filter: 'blur(1px)',
+                    opacity: 0.7,
+                    boxShadow: `0 0 15px ${planet.color}50`,
                   }}
-                >
-                  <Icon 
-                    className="w-6 h-6 transition-colors" 
-                    style={{ color: isHovered ? subject.color : '#94a3b8' }}
-                  />
-                </button>
-                
-                {/* Tooltip */}
-                <div 
-                  className={`absolute left-1/2 -translate-x-1/2 top-full mt-3 transition-all duration-200 ${
-                    isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
-                  }`}
-                >
-                  <div className="bg-slate-900/95 backdrop-blur-sm rounded-lg px-3 py-2 text-center whitespace-nowrap border border-slate-700/50">
-                    <div className="text-sm font-medium text-foreground">{tool.title}</div>
-                    <div className="text-xs text-muted-foreground">{tool.description}</div>
-                  </div>
-                </div>
+                />
               </div>
             );
           })}
-        </div>
-      </div>
 
-      {/* Curved planet surface - opaque bowl at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 flex justify-center overflow-hidden" style={{ height: '42%' }}>
-        <div
-          className="rounded-[9999px] border-t border-slate-700/50"
-          style={{
-            width: '200%',
-            height: '900px',
-            marginBottom: '-550px',
-            background: `
-              radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.1) 0%, transparent 40%),
-              radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.06) 0%, transparent 35%),
-              radial-gradient(ellipse at 50% 0%, ${subject.color}90 0%, ${subject.color}70 30%, ${subject.color}50 60%, ${subject.color}40 100%)
-            `,
-            boxShadow: `inset 0 30px 80px ${subject.color}30, 0 -20px 60px rgba(0,0,0,0.5)`,
-          }}
-        >
-          {/* Surface texture - crater-like dots */}
+          {/* Distant green star/sun - z-20, in front of orbiting planets */}
           <div
-            className="absolute inset-0 rounded-[9999px] opacity-30 pointer-events-none"
+            className="absolute left-1/2 -translate-x-1/2 z-20"
+            style={{ top: '18%' }}
+          >
+            <div
+              className="w-28 h-28 rounded-full"
+              style={{
+                background: 'radial-gradient(circle, #34d399 0%, #10b981 40%, rgba(16,185,129,0.25) 70%, transparent 100%)',
+                filter: 'blur(3px)',
+                opacity: 0.7,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Tool icons - positioned above the surface */}
+        <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '28%' }}>
+          <div className="flex items-center gap-10">
+            {(Object.entries(toolInfo) as [string, typeof toolInfo.sources][]).map(([key, tool]) => {
+              const Icon = tool.icon;
+              const isHovered = hoveredTool === key;
+              
+              return (
+                <div key={key} className="relative">
+                  <button
+                    onClick={() => handleToolClick(key)}
+                    onMouseEnter={() => setHoveredTool(key)}
+                    onMouseLeave={() => setHoveredTool(null)}
+                    className="w-16 h-16 rounded-full bg-slate-900/90 border border-slate-700 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:-translate-y-1"
+                    style={{
+                      boxShadow: isHovered 
+                        ? `0 0 20px ${subject.color}60, 0 8px 30px rgba(0,0,0,0.4)` 
+                        : '0 4px 20px rgba(0,0,0,0.3)',
+                      borderColor: isHovered ? subject.color : undefined,
+                    }}
+                  >
+                    <Icon 
+                      className="w-6 h-6 transition-colors" 
+                      style={{ color: isHovered ? subject.color : '#94a3b8' }}
+                    />
+                  </button>
+                  
+                  {/* Tooltip */}
+                  <div 
+                    className={`absolute left-1/2 -translate-x-1/2 top-full mt-3 transition-all duration-200 ${
+                      isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+                    }`}
+                  >
+                    <div className="bg-slate-900/95 backdrop-blur-sm rounded-lg px-3 py-2 text-center whitespace-nowrap border border-slate-700/50">
+                      <div className="text-sm font-medium text-foreground">{tool.title}</div>
+                      <div className="text-xs text-muted-foreground">{tool.description}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Curved planet surface - shallower curve */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 flex justify-center overflow-hidden" style={{ height: '30%' }}>
+          <div
+            className="rounded-[50%] border-t border-slate-700/50"
             style={{
-              backgroundImage: `
-                radial-gradient(circle at 20% 15%, rgba(0,0,0,0.3) 0%, transparent 8%),
-                radial-gradient(circle at 65% 25%, rgba(0,0,0,0.2) 0%, transparent 5%),
-                radial-gradient(circle at 40% 20%, rgba(0,0,0,0.25) 0%, transparent 6%),
-                radial-gradient(circle at 80% 18%, rgba(0,0,0,0.2) 0%, transparent 4%),
-                radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)
+              width: '140%',
+              height: '400px',
+              marginBottom: '-200px',
+              background: `
+                radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.1) 0%, transparent 40%),
+                radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.06) 0%, transparent 35%),
+                radial-gradient(ellipse at 50% 0%, ${subject.color}90 0%, ${subject.color}70 30%, ${subject.color}50 60%, ${subject.color}40 100%)
               `,
-              backgroundSize: '100% 100%, 100% 100%, 100% 100%, 100% 100%, 20px 20px',
+              boxShadow: `inset 0 30px 80px ${subject.color}30, 0 -20px 60px rgba(0,0,0,0.5)`,
             }}
-          />
+          >
+            {/* Surface texture - crater-like dots */}
+            <div
+              className="absolute inset-0 rounded-[50%] opacity-30 pointer-events-none"
+              style={{
+                backgroundImage: `
+                  radial-gradient(circle at 20% 15%, rgba(0,0,0,0.3) 0%, transparent 8%),
+                  radial-gradient(circle at 65% 25%, rgba(0,0,0,0.2) 0%, transparent 5%),
+                  radial-gradient(circle at 40% 20%, rgba(0,0,0,0.25) 0%, transparent 6%),
+                  radial-gradient(circle at 80% 18%, rgba(0,0,0,0.2) 0%, transparent 4%),
+                  radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)
+                `,
+                backgroundSize: '100% 100%, 100% 100%, 100% 100%, 100% 100%, 20px 20px',
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

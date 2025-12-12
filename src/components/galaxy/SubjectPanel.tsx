@@ -150,9 +150,20 @@ export const SubjectPanel = ({ subject, onClose, onDelete, onRename }: SubjectPa
           <div className="space-y-3">
             <Button 
               className="w-full"
+              style={{ 
+                background: `linear-gradient(135deg, ${subject.color}ee, ${subject.color}aa)`,
+                boxShadow: `0 4px 20px ${subject.color}40`
+              }}
+              onClick={() => navigate(`/planet/${encodeURIComponent(subject.name)}`)}
+            >
+              Jump In
+            </Button>
+            <Button 
+              variant="outline"
+              className="w-full"
               onClick={() => navigate(`/astar-ai?subject=${encodeURIComponent(subject.name)}`)}
             >
-              Open ASTAR.AI for this subject
+              Open ASTAR.AI
             </Button>
             <Button 
               variant="secondary"

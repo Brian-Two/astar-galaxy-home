@@ -9,6 +9,7 @@ import Explore from "./pages/Explore";
 import AstarAI from "./pages/AstarAI";
 import Board from "./pages/Board";
 import Stats from "./pages/Stats";
+import PlanetLanding from "./pages/PlanetLanding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/astar-ai" element={<AstarAI />} />
           <Route path="/board" element={<Board />} />
           <Route path="/stats" element={<Stats />} />
+          <Route path="/planet/:subjectName" element={<PlanetLanding />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -214,7 +214,7 @@ const PlanetLanding = () => {
         </div>
 
         {/* Tool icons - positioned above the surface */}
-        <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '28%' }}>
+        <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '18%' }}>
           <div className="flex items-center gap-10">
             {(Object.entries(toolInfo) as [string, typeof toolInfo.sources][]).map(([key, tool]) => {
               const Icon = tool.icon;
@@ -258,13 +258,13 @@ const PlanetLanding = () => {
         </div>
 
         {/* Curved planet surface - shallower curve */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 flex justify-center overflow-hidden" style={{ height: '30%' }}>
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 overflow-hidden" style={{ height: '25%' }}>
           <div
             className="rounded-[50%] border-t border-slate-700/50"
             style={{
-              width: '250%',
-              height: '400px',
-              marginBottom: '-200px',
+              width: '280%',
+              height: '500px',
+              marginBottom: '-320px',
               background: `
                 radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.1) 0%, transparent 40%),
                 radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.06) 0%, transparent 35%),

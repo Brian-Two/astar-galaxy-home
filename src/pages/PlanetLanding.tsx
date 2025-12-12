@@ -162,9 +162,8 @@ const PlanetLanding = () => {
           </button>
         </div>
 
-        {/* Sky with distant star and orbiting planets */}
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-          {/* Orbiting planets - z-10, behind the sun */}
+        {/* Orbiting planets - behind the sun */}
+        <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
           {otherPlanets.map((planet, i) => {
             const angle = orbitAngles[i] || planet.startAngle;
             const centerX = 50;
@@ -175,7 +174,7 @@ const PlanetLanding = () => {
             return (
               <div
                 key={planet.id}
-                className="absolute transition-all duration-100 z-10"
+                className="absolute transition-all duration-100"
                 style={{
                   left: `${x}%`,
                   top: `${y}%`,
@@ -187,30 +186,25 @@ const PlanetLanding = () => {
                   style={{
                     width: `${planet.size}px`,
                     height: `${planet.size}px`,
-                    background: `radial-gradient(circle at 30% 30%, ${planet.color}cc, ${planet.color}88)`,
-                    filter: 'blur(1px)',
-                    opacity: 0.7,
+                    background: `radial-gradient(circle at 30% 30%, #ffffff 0%, ${planet.color} 40%, ${planet.color} 100%)`,
                     boxShadow: `0 0 15px ${planet.color}50`,
                   }}
                 />
               </div>
             );
           })}
+        </div>
 
-          {/* Distant green star/sun - z-20, in front of orbiting planets */}
+        {/* Distant green star/sun - in front of orbiting planets */}
+        <div className="absolute inset-0 flex items-start justify-center pointer-events-none z-20" style={{ paddingTop: '18%' }}>
           <div
-            className="absolute left-1/2 -translate-x-1/2 z-20"
-            style={{ top: '18%' }}
-          >
-            <div
-              className="w-28 h-28 rounded-full"
-              style={{
-                background: 'radial-gradient(circle, #34d399 0%, #10b981 40%, rgba(16,185,129,0.25) 70%, transparent 100%)',
-                filter: 'blur(3px)',
-                opacity: 0.7,
-              }}
-            />
-          </div>
+            className="w-32 h-32 rounded-full"
+            style={{
+              background: 'radial-gradient(circle, #34d399 0%, #10b981 40%, rgba(16,185,129,0.25) 70%, transparent 100%)',
+              filter: 'blur(3px)',
+              boxShadow: '0 0 60px rgba(52,211,153,0.4), 0 0 100px rgba(16,185,129,0.2)',
+            }}
+          />
         </div>
 
         {/* Tool icons - positioned above the surface */}
@@ -257,18 +251,18 @@ const PlanetLanding = () => {
           </div>
         </div>
 
-        {/* Curved planet surface - shallower curve */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 flex justify-center overflow-hidden" style={{ height: '30%' }}>
+        {/* Curved planet surface - shallower curve, fills bottom completely */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-30 overflow-visible" style={{ height: '32%' }}>
           <div
             className="rounded-[50%] border-t border-slate-700/50"
             style={{
-              width: '140%',
-              height: '400px',
-              marginBottom: '-200px',
+              width: '180vw',
+              height: '500px',
+              marginBottom: '-280px',
               background: `
                 radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.1) 0%, transparent 40%),
                 radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.06) 0%, transparent 35%),
-                radial-gradient(ellipse at 50% 0%, ${subject.color}90 0%, ${subject.color}70 30%, ${subject.color}50 60%, ${subject.color}40 100%)
+                radial-gradient(ellipse at 50% 0%, ${subject.color} 0%, ${subject.color} 30%, ${subject.color} 60%, ${subject.color} 100%)
               `,
               boxShadow: `inset 0 30px 80px ${subject.color}30, 0 -20px 60px rgba(0,0,0,0.5)`,
             }}

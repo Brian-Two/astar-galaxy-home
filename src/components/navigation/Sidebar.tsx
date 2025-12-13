@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Compass, Sparkles, LayoutDashboard, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Home, Compass, Sparkles, LayoutDashboard, BarChart3, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import astarLogo from '@/assets/astar-logo.png';
 const menuItems = [{
@@ -23,6 +23,10 @@ const menuItems = [{
   icon: BarChart3,
   label: 'Stats',
   path: '/stats'
+}, {
+  icon: Users,
+  label: 'Friends',
+  path: '/friends'
 }];
 export const Sidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);

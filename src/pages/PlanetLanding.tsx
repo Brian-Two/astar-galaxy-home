@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Users, BookOpen, Monitor, ChevronUp } from 'lucide-react';
+import { Users, BookOpen, Monitor, ChevronUp, ChevronLeft, ChevronRight, Plus, Bot } from 'lucide-react';
 import { subjects } from '@/data/subjects';
 import { Sidebar } from '@/components/navigation/Sidebar';
 import { UserStatus } from '@/components/galaxy/UserStatus';
+import { CreateAgentModal } from '@/components/planet/CreateAgentModal';
+import { AgentDetailsPanel } from '@/components/planet/AgentDetailsPanel';
+import { Agent, agentTemplates, mockPlanetSources, PlanetSource } from '@/components/planet/types';
+import { toast } from 'sonner';
 
 interface OtherPlanet {
   id: string;
@@ -15,11 +19,11 @@ interface OtherPlanet {
   size: number;
 }
 
-const toolInfo = {
-  sources: { icon: BookOpen, title: 'Sources', description: 'View notes & assignments.' },
-  workstation: { icon: Monitor, title: 'Workstation', description: 'Open ASTAR.AI.' },
-  members: { icon: Users, title: 'Members', description: "See who's on this planet." },
-};
+const coreTools = [
+  { key: 'sources', icon: BookOpen, title: 'Sources', description: 'View notes & assignments.' },
+  { key: 'workstation', icon: Monitor, title: 'Workstation', description: 'Open ASTAR.AI.' },
+  { key: 'members', icon: Users, title: 'Members', description: "See who's on this planet." },
+];
 
 const PlanetLanding = () => {
   const { subjectName } = useParams();
@@ -28,7 +32,12 @@ const PlanetLanding = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hoveredTool, setHoveredTool] = useState<string | null>(null);
   const [orbitAngles, setOrbitAngles] = useState<number[]>([]);
-  
+  const [currentPage, setCurrentPage] = useState(0);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
+
   // Find the subject from data
   const decodedName = subjectName ? decodeURIComponent(subjectName) : searchParams.get('subject') || 'Linear Algebra';
   const subject = subjects.find(s => s.name === decodedName) || {
@@ -37,6 +46,11 @@ const PlanetLanding = () => {
     lastActiveDaysAgo: 0,
     stats: { assignmentsCompleted: 0, studySessions: 0, projects: 0 }
   };
+
+  const planetId = subject.name.toLowerCase().replace(/\s/g, '-');
+
+  // Mock sources for this planet
+  const [sources] = useState<PlanetSource[]>(mockPlanetSources);
 
   // Get other planets for orbiting
   const otherPlanets: OtherPlanet[] = subjects
@@ -125,12 +139,214 @@ const PlanetLanding = () => {
     };
   }, []);
 
+  // Calculate pages and icons
+  const maxAgentsOnPage0 = 2;
+  const maxAgentsPerPage = 5;
+  
+  const agentsOnPage0 = agents.slice(0, maxAgentsOnPage0);
+  const remainingAgents = agents.slice(maxAgentsOnPage0);
+  const additionalPages = Math.ceil(remainingAgents.length / maxAgentsPerPage);
+  const totalPages = 1 + (remainingAgents.length > 0 || agents.length >= maxAgentsOnPage0 ? additionalPages : 0);
+
+  const getIconsForCurrentPage = () => {
+    if (currentPage === 0) {
+      // Page 0: 3 core tools + up to 2 agents + maybe new agent button
+      const icons: { type: 'tool' | 'agent' | 'new'; data?: any }[] = 
+        coreTools.map(t => ({ type: 'tool' as const, data: t }));
+      
+      agentsOnPage0.forEach(agent => {
+        icons.push({ type: 'agent', data: agent });
+      });
+      
+      // Show "new agent" if there's room on page 0
+      if (agentsOnPage0.length < maxAgentsOnPage0) {
+        icons.push({ type: 'new' });
+      }
+      
+      return icons;
+    } else {
+      // Pages 1+: only agents
+      const pageIndex = currentPage - 1;
+      const startIdx = pageIndex * maxAgentsPerPage;
+      const pageAgents = remainingAgents.slice(startIdx, startIdx + maxAgentsPerPage);
+      
+      const icons: { type: 'tool' | 'agent' | 'new'; data?: any }[] = 
+        pageAgents.map(agent => ({ type: 'agent', data: agent }));
+      
+      // Show "new agent" if there's room
+      if (pageAgents.length < maxAgentsPerPage) {
+        icons.push({ type: 'new' });
+      }
+      
+      return icons;
+    }
+  };
+
+  const currentIcons = getIconsForCurrentPage();
+  const showNavArrows = agents.length >= maxAgentsOnPage0 || remainingAgents.length > 0;
+
   const handleToolClick = (tool: string) => {
     if (tool === 'workstation') {
       navigate(`/astar-ai?subject=${encodeURIComponent(subject.name)}`);
     } else {
       console.log(`${tool} clicked`);
     }
+  };
+
+  const handleAgentClick = (agent: Agent) => {
+    setSelectedAgent(agent);
+    setDetailsPanelOpen(true);
+  };
+
+  const handleCreateAgent = (agentData: Omit<Agent, 'id' | 'timesUsed' | 'uniqueUsers' | 'createdAt'>) => {
+    const newAgent: Agent = {
+      ...agentData,
+      id: `agent-${Date.now()}`,
+      timesUsed: 0,
+      uniqueUsers: 0,
+      createdAt: new Date(),
+    };
+    setAgents(prev => [...prev, newAgent]);
+    toast.success(`Agent "${newAgent.name}" created!`);
+  };
+
+  const handleStartSession = (agent: Agent) => {
+    // Increment usage stats
+    setAgents(prev => prev.map(a => 
+      a.id === agent.id 
+        ? { ...a, timesUsed: a.timesUsed + 1, uniqueUsers: a.uniqueUsers + 1 }
+        : a
+    ));
+    toast.success(`Starting session with ${agent.name}...`);
+    // In the future, navigate to agent-specific chat
+  };
+
+  const navigatePage = (direction: 'left' | 'right') => {
+    if (direction === 'left' && currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    } else if (direction === 'right') {
+      // Calculate max page
+      const maxPage = Math.max(0, Math.ceil((agents.length - maxAgentsOnPage0) / maxAgentsPerPage));
+      if (currentPage < maxPage) {
+        setCurrentPage(currentPage + 1);
+      }
+    }
+  };
+
+  const renderIcon = (icon: { type: 'tool' | 'agent' | 'new'; data?: any }, index: number) => {
+    const isHovered = hoveredTool === `${icon.type}-${index}`;
+    const hoverKey = `${icon.type}-${index}`;
+
+    if (icon.type === 'tool') {
+      const tool = icon.data;
+      const Icon = tool.icon;
+      return (
+        <div key={hoverKey} className="relative">
+          <button
+            onClick={() => handleToolClick(tool.key)}
+            onMouseEnter={() => setHoveredTool(hoverKey)}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="w-16 h-16 rounded-full bg-slate-900/90 border border-slate-700 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:-translate-y-1"
+            style={{
+              boxShadow: isHovered 
+                ? `0 0 20px ${subject.color}60, 0 8px 30px rgba(0,0,0,0.4)` 
+                : '0 4px 20px rgba(0,0,0,0.3)',
+              borderColor: isHovered ? subject.color : undefined,
+            }}
+          >
+            <Icon 
+              className="w-6 h-6 transition-colors" 
+              style={{ color: isHovered ? subject.color : '#94a3b8' }}
+            />
+          </button>
+          
+          {/* Tooltip */}
+          <div 
+            className={`absolute left-1/2 -translate-x-1/2 top-full mt-3 transition-all duration-200 z-30 ${
+              isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+            }`}
+          >
+            <div className="bg-slate-900/95 backdrop-blur-sm rounded-lg px-3 py-2 text-center whitespace-nowrap border border-slate-700/50">
+              <div className="text-sm font-medium text-foreground">{tool.title}</div>
+              <div className="text-xs text-muted-foreground">{tool.description}</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (icon.type === 'agent') {
+      const agent = icon.data as Agent;
+      const template = agentTemplates.find(t => t.id === agent.template);
+      return (
+        <div key={hoverKey} className="relative">
+          <button
+            onClick={() => handleAgentClick(agent)}
+            onMouseEnter={() => setHoveredTool(hoverKey)}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="w-16 h-16 rounded-full bg-slate-900/90 border border-slate-700 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:-translate-y-1 text-2xl"
+            style={{
+              boxShadow: isHovered 
+                ? `0 0 20px ${subject.color}60, 0 8px 30px rgba(0,0,0,0.4)` 
+                : '0 4px 20px rgba(0,0,0,0.3)',
+              borderColor: isHovered ? subject.color : undefined,
+            }}
+          >
+            {template?.icon || <Bot className="w-6 h-6" style={{ color: '#94a3b8' }} />}
+          </button>
+          
+          {/* Tooltip */}
+          <div 
+            className={`absolute left-1/2 -translate-x-1/2 top-full mt-3 transition-all duration-200 z-30 ${
+              isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+            }`}
+          >
+            <div className="bg-slate-900/95 backdrop-blur-sm rounded-lg px-3 py-2 text-center whitespace-nowrap border border-slate-700/50">
+              <div className="text-sm font-medium text-foreground">{agent.name}</div>
+              <div className="text-xs text-muted-foreground">{template?.description}</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (icon.type === 'new') {
+      return (
+        <div key={hoverKey} className="relative">
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            onMouseEnter={() => setHoveredTool(hoverKey)}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="w-16 h-16 rounded-full bg-slate-900/90 border border-dashed border-slate-600 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:-translate-y-1 hover:border-solid"
+            style={{
+              boxShadow: isHovered 
+                ? `0 0 20px ${subject.color}60, 0 8px 30px rgba(0,0,0,0.4)` 
+                : '0 4px 20px rgba(0,0,0,0.3)',
+              borderColor: isHovered ? subject.color : undefined,
+            }}
+          >
+            <Plus 
+              className="w-6 h-6 transition-colors" 
+              style={{ color: isHovered ? subject.color : '#64748b' }}
+            />
+          </button>
+          
+          {/* Tooltip */}
+          <div 
+            className={`absolute left-1/2 -translate-x-1/2 top-full mt-3 transition-all duration-200 z-30 ${
+              isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+            }`}
+          >
+            <div className="bg-slate-900/95 backdrop-blur-sm rounded-lg px-3 py-2 text-center whitespace-nowrap border border-slate-700/50">
+              <div className="text-sm font-medium text-foreground">New Agent</div>
+              <div className="text-xs text-muted-foreground">Create a custom AI helper</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -215,46 +431,56 @@ const PlanetLanding = () => {
 
         {/* Tool icons - positioned above the surface */}
         <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '28%' }}>
-          <div className="flex items-center gap-10">
-            {(Object.entries(toolInfo) as [string, typeof toolInfo.sources][]).map(([key, tool]) => {
-              const Icon = tool.icon;
-              const isHovered = hoveredTool === key;
-              
-              return (
-                <div key={key} className="relative">
-                  <button
-                    onClick={() => handleToolClick(key)}
-                    onMouseEnter={() => setHoveredTool(key)}
-                    onMouseLeave={() => setHoveredTool(null)}
-                    className="w-16 h-16 rounded-full bg-slate-900/90 border border-slate-700 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:-translate-y-1"
-                    style={{
-                      boxShadow: isHovered 
-                        ? `0 0 20px ${subject.color}60, 0 8px 30px rgba(0,0,0,0.4)` 
-                        : '0 4px 20px rgba(0,0,0,0.3)',
-                      borderColor: isHovered ? subject.color : undefined,
-                    }}
-                  >
-                    <Icon 
-                      className="w-6 h-6 transition-colors" 
-                      style={{ color: isHovered ? subject.color : '#94a3b8' }}
-                    />
-                  </button>
-                  
-                  {/* Tooltip */}
-                  <div 
-                    className={`absolute left-1/2 -translate-x-1/2 top-full mt-3 transition-all duration-200 ${
-                      isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
-                    }`}
-                  >
-                    <div className="bg-slate-900/95 backdrop-blur-sm rounded-lg px-3 py-2 text-center whitespace-nowrap border border-slate-700/50">
-                      <div className="text-sm font-medium text-foreground">{tool.title}</div>
-                      <div className="text-xs text-muted-foreground">{tool.description}</div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex items-center gap-4">
+            {/* Left navigation arrow */}
+            {showNavArrows && (
+              <button
+                onClick={() => navigatePage('left')}
+                disabled={currentPage === 0}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+                  currentPage === 0 
+                    ? 'opacity-30 cursor-not-allowed' 
+                    : 'bg-slate-900/70 border border-slate-700 hover:bg-slate-800/70 hover:border-slate-600'
+                }`}
+              >
+                <ChevronLeft className="w-5 h-5 text-slate-400" />
+              </button>
+            )}
+
+            {/* Icons */}
+            <div className="flex items-center gap-6">
+              {currentIcons.map((icon, i) => renderIcon(icon, i))}
+            </div>
+
+            {/* Right navigation arrow */}
+            {showNavArrows && (
+              <button
+                onClick={() => navigatePage('right')}
+                disabled={currentPage >= Math.ceil((agents.length - maxAgentsOnPage0) / maxAgentsPerPage)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+                  currentPage >= Math.ceil((agents.length - maxAgentsOnPage0) / maxAgentsPerPage)
+                    ? 'opacity-30 cursor-not-allowed' 
+                    : 'bg-slate-900/70 border border-slate-700 hover:bg-slate-800/70 hover:border-slate-600'
+                }`}
+              >
+                <ChevronRight className="w-5 h-5 text-slate-400" />
+              </button>
+            )}
           </div>
+
+          {/* Page indicator */}
+          {showNavArrows && (
+            <div className="flex justify-center mt-4 gap-1.5">
+              {Array.from({ length: Math.max(1, Math.ceil((agents.length - maxAgentsOnPage0) / maxAgentsPerPage) + 1) }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${
+                    i === currentPage ? 'bg-slate-300 w-3' : 'bg-slate-600'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Curved planet surface - shallower curve */}
@@ -290,6 +516,24 @@ const PlanetLanding = () => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <CreateAgentModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onCreateAgent={handleCreateAgent}
+        planetId={planetId}
+        planetColor={subject.color}
+        sources={sources}
+      />
+
+      <AgentDetailsPanel
+        open={detailsPanelOpen}
+        onClose={() => setDetailsPanelOpen(false)}
+        agent={selectedAgent}
+        onStartSession={handleStartSession}
+        planetColor={subject.color}
+      />
     </div>
   );
 };

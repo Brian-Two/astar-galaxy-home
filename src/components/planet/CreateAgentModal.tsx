@@ -144,24 +144,32 @@ export function CreateAgentModal({
             <div>
               <h3 className="text-lg font-medium text-foreground mb-3">Choose an agent type</h3>
               <div className="grid grid-cols-2 gap-3">
-                {agentTemplates.map(template => (
-                  <button
-                    key={template.id}
-                    onClick={() => setSelectedTemplate(template.id)}
-                    className={`p-4 rounded-lg border text-left transition-all ${
-                      selectedTemplate === template.id
-                        ? 'border-2 bg-slate-800/50'
-                        : 'border-slate-700 hover:border-slate-600 bg-slate-900/50'
-                    }`}
-                    style={{
-                      borderColor: selectedTemplate === template.id ? planetColor : undefined,
-                    }}
-                  >
-                    <span className="text-2xl mb-2 block">{template.icon}</span>
-                    <div className="font-medium text-foreground">{template.name}</div>
-                    <div className="text-xs text-muted-foreground mt-1">{template.description}</div>
-                  </button>
-                ))}
+                {agentTemplates.map(template => {
+                  const IconComponent = template.icon;
+                  return (
+                    <button
+                      key={template.id}
+                      onClick={() => setSelectedTemplate(template.id)}
+                      className={`p-4 rounded-lg border text-left transition-all ${
+                        selectedTemplate === template.id
+                          ? 'border-2 bg-slate-800/50'
+                          : 'border-slate-700 hover:border-slate-600 bg-slate-900/50'
+                      }`}
+                      style={{
+                        borderColor: selectedTemplate === template.id ? planetColor : undefined,
+                      }}
+                    >
+                      <div className="mb-2">
+                        <IconComponent 
+                          className="w-6 h-6" 
+                          style={{ color: selectedTemplate === template.id ? planetColor : '#94a3b8' }}
+                        />
+                      </div>
+                      <div className="font-medium text-foreground">{template.name}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{template.description}</div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div>
@@ -360,7 +368,10 @@ export function CreateAgentModal({
               </div>
               <div>
                 <span className="text-muted-foreground text-sm">Type:</span>
-                <div className="text-foreground">{template?.icon} {template?.name}</div>
+                <div className="text-foreground flex items-center gap-2">
+                  {template && <template.icon className="w-4 h-4" style={{ color: planetColor }} />}
+                  {template?.name}
+                </div>
               </div>
               <div>
                 <span className="text-muted-foreground text-sm">Learning objectives:</span>

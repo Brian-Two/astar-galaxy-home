@@ -38,10 +38,10 @@ export function AgentDetailsPanel({
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-slate-800 border border-slate-700"
+              className="w-12 h-12 rounded-full flex items-center justify-center bg-slate-800 border border-slate-700"
               style={{ borderColor: planetColor }}
             >
-              {template?.icon}
+              {template && <template.icon className="w-6 h-6" style={{ color: planetColor }} />}
             </div>
             <div>
               <DialogTitle className="text-foreground">{agent.name}</DialogTitle>

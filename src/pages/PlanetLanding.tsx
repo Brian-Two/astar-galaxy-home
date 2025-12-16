@@ -145,8 +145,15 @@ const PlanetLanding = () => {
   
   const agentsOnPage0 = agents.slice(0, maxAgentsOnPage0);
   const remainingAgents = agents.slice(maxAgentsOnPage0);
-  const additionalPages = Math.ceil(remainingAgents.length / maxAgentsPerPage);
-  const totalPages = 1 + (remainingAgents.length > 0 || agents.length >= maxAgentsOnPage0 ? additionalPages : 0);
+  
+  // Calculate total pages: page 0 always exists, plus additional pages if needed
+  const needsMorePages = agents.length >= maxAgentsOnPage0; // Page 0 agent slots are full
+  const additionalPagesCount = Math.max(
+    needsMorePages ? 1 : 0, // At least 1 additional page if page 0 is full (for new agent button)
+    Math.ceil(remainingAgents.length / maxAgentsPerPage)
+  );
+  const totalPages = 1 + additionalPagesCount;
+  const showNavArrows = totalPages > 1;
 
   const getIconsForCurrentPage = () => {
     if (currentPage === 0) {
@@ -183,7 +190,6 @@ const PlanetLanding = () => {
   };
 
   const currentIcons = getIconsForCurrentPage();
-  const showNavArrows = agents.length >= maxAgentsOnPage0 || remainingAgents.length > 0;
 
   const handleToolClick = (tool: string) => {
     if (tool === 'workstation') {
@@ -224,12 +230,8 @@ const PlanetLanding = () => {
   const navigatePage = (direction: 'left' | 'right') => {
     if (direction === 'left' && currentPage > 0) {
       setCurrentPage(currentPage - 1);
-    } else if (direction === 'right') {
-      // Calculate max page
-      const maxPage = Math.max(0, Math.ceil((agents.length - maxAgentsOnPage0) / maxAgentsPerPage));
-      if (currentPage < maxPage) {
-        setCurrentPage(currentPage + 1);
-      }
+    } else if (direction === 'right' && currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -460,9 +462,9 @@ const PlanetLanding = () => {
             {showNavArrows && (
               <button
                 onClick={() => navigatePage('right')}
-                disabled={currentPage >= Math.ceil((agents.length - maxAgentsOnPage0) / maxAgentsPerPage)}
+                disabled={currentPage >= totalPages - 1}
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
-                  currentPage >= Math.ceil((agents.length - maxAgentsOnPage0) / maxAgentsPerPage)
+                  currentPage >= totalPages - 1
                     ? 'opacity-30 cursor-not-allowed' 
                     : 'bg-slate-900/70 border border-slate-700 hover:bg-slate-800/70 hover:border-slate-600'
                 }`}
@@ -475,7 +477,7 @@ const PlanetLanding = () => {
           {/* Page indicator */}
           {showNavArrows && (
             <div className="flex justify-center mt-4 gap-1.5">
-              {Array.from({ length: Math.max(1, Math.ceil((agents.length - maxAgentsOnPage0) / maxAgentsPerPage) + 1) }).map((_, i) => (
+              {Array.from({ length: totalPages }).map((_, i) => (
                 <div
                   key={i}
                   className={`w-1.5 h-1.5 rounded-full transition-all ${

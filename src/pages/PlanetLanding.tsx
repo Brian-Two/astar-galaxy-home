@@ -278,13 +278,14 @@ const PlanetLanding = () => {
     if (icon.type === 'agent') {
       const agent = icon.data as Agent;
       const template = agentTemplates.find(t => t.id === agent.template);
+      const AgentIcon = template?.icon || Bot;
       return (
         <div key={hoverKey} className="relative">
           <button
             onClick={() => handleAgentClick(agent)}
             onMouseEnter={() => setHoveredTool(hoverKey)}
             onMouseLeave={() => setHoveredTool(null)}
-            className="w-16 h-16 rounded-full bg-slate-900/90 border border-slate-700 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:-translate-y-1 text-2xl"
+            className="w-16 h-16 rounded-full bg-slate-900/90 border border-slate-700 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:-translate-y-1"
             style={{
               boxShadow: isHovered 
                 ? `0 0 20px ${subject.color}60, 0 8px 30px rgba(0,0,0,0.4)` 
@@ -292,7 +293,10 @@ const PlanetLanding = () => {
               borderColor: isHovered ? subject.color : undefined,
             }}
           >
-            {template?.icon || <Bot className="w-6 h-6" style={{ color: '#94a3b8' }} />}
+            <AgentIcon 
+              className="w-6 h-6 transition-colors" 
+              style={{ color: isHovered ? subject.color : '#94a3b8' }}
+            />
           </button>
           
           {/* Tooltip */}

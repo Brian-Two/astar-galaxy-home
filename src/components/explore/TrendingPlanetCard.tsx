@@ -45,7 +45,7 @@ export const TrendingPlanetCard = ({ item, onClick, index }: TrendingPlanetCardP
       </div>
 
       {/* Planet name */}
-      <span className="font-display text-sm text-foreground text-center line-clamp-2 group-hover:text-primary transition-colors">
+      <span className="font-display text-sm text-foreground text-center line-clamp-2 group-hover:text-white transition-colors">
         {item.title}
       </span>
 

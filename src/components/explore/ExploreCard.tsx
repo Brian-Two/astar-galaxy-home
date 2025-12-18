@@ -16,7 +16,7 @@ export const ExploreCard = ({ item, onClick, variant = 'default' }: ExploreCardP
     <button
       onClick={onClick}
       className={cn(
-        'glass-panel text-left transition-all duration-200 hover:bg-card/80 hover:border-primary/30 group flex-shrink-0',
+        'glass-panel text-left transition-all duration-200 hover:bg-card/80 hover:border-white/30 group flex-shrink-0',
         isCompact ? 'p-4 w-[280px]' : 'p-5 w-[320px]'
       )}
     >
@@ -24,13 +24,13 @@ export const ExploreCard = ({ item, onClick, variant = 'default' }: ExploreCardP
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className={cn(
-            'font-display font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2',
+            'font-display font-semibold text-foreground group-hover:text-white transition-colors line-clamp-2',
             isCompact ? 'text-sm' : 'text-base'
           )}>
             {item.title}
           </h3>
           {item.link && (
-            <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 mt-0.5" />
+            <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-white transition-colors flex-shrink-0 mt-0.5" />
           )}
         </div>
 

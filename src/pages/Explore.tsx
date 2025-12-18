@@ -138,40 +138,28 @@ const Explore = () => {
           {/* Rows */}
           <div className="space-y-2">
             {/* External Opportunities */}
-            <ExploreRow 
-              title="External Opportunities For You" 
-              subtitle="Curated resources, competitions, and internships"
-            >
+            <ExploreRow title="External Opportunities For You">
               {opportunities.map(item => (
                 <ExploreCard key={item.id} item={item} onClick={() => handleCardClick(item)} />
               ))}
             </ExploreRow>
 
             {/* Community Projects */}
-            <ExploreRow 
-              title="Community Projects & Challenges"
-              subtitle="Join projects created by other learners"
-            >
+            <ExploreRow title="Community Projects & Challenges">
               {projects.map(item => (
                 <ExploreCard key={item.id} item={item} onClick={() => handleCardClick(item)} />
               ))}
             </ExploreRow>
 
             {/* Trending Planets */}
-            <ExploreRow 
-              title="Trending Planets"
-              subtitle="Popular learning galaxies this week"
-            >
+            <ExploreRow title="Trending Planets">
               {planets.map((item, index) => (
                 <TrendingPlanetCard key={item.id} item={item} onClick={() => handleCardClick(item)} index={index} />
               ))}
             </ExploreRow>
 
             {/* Trending Agents */}
-            <ExploreRow 
-              title="Trending Learning Agents"
-              subtitle="AI-powered study tools from the community"
-            >
+            <ExploreRow title="Trending Learning Agents">
               {agents.map(item => (
                 <ExploreCard key={item.id} item={item} onClick={() => handleCardClick(item)} />
               ))}

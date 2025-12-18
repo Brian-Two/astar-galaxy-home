@@ -3,12 +3,11 @@ import { useRef, useState } from 'react';
 
 interface ExploreRowProps {
   title: string;
-  subtitle?: string;
   onSeeAll?: () => void;
   children: React.ReactNode;
 }
 
-export const ExploreRow = ({ title, subtitle, onSeeAll, children }: ExploreRowProps) => {
+export const ExploreRow = ({ title, onSeeAll, children }: ExploreRowProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -36,14 +35,9 @@ export const ExploreRow = ({ title, subtitle, onSeeAll, children }: ExploreRowPr
     <div className="mb-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="font-display text-lg font-semibold text-foreground">
-            {title}
-          </h2>
-          {subtitle && (
-            <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
-          )}
-        </div>
+        <h2 className="font-display text-lg font-semibold text-foreground">
+          {title}
+        </h2>
         <div className="flex items-center gap-2">
           {/* Scroll buttons */}
           <button

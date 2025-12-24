@@ -14,13 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          bartle_primary_type: string | null
+          bartle_x: number | null
+          bartle_y: number | null
+          created_at: string
+          desired_occupation: string | null
+          goals: Json | null
+          has_completed_onboarding: boolean | null
+          id: string
+          learning_level_index: number | null
+          learning_level_label: string | null
+          major: string | null
+          major_is_custom: boolean | null
+          occupation_is_custom: boolean | null
+          onboarding_step: number | null
+          school: string | null
+          school_is_custom: boolean | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          bartle_primary_type?: string | null
+          bartle_x?: number | null
+          bartle_y?: number | null
+          created_at?: string
+          desired_occupation?: string | null
+          goals?: Json | null
+          has_completed_onboarding?: boolean | null
+          id: string
+          learning_level_index?: number | null
+          learning_level_label?: string | null
+          major?: string | null
+          major_is_custom?: boolean | null
+          occupation_is_custom?: boolean | null
+          onboarding_step?: number | null
+          school?: string | null
+          school_is_custom?: boolean | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          bartle_primary_type?: string | null
+          bartle_x?: number | null
+          bartle_y?: number | null
+          created_at?: string
+          desired_occupation?: string | null
+          goals?: Json | null
+          has_completed_onboarding?: boolean | null
+          id?: string
+          learning_level_index?: number | null
+          learning_level_label?: string | null
+          major?: string | null
+          major_is_custom?: boolean | null
+          occupation_is_custom?: boolean | null
+          onboarding_step?: number | null
+          school?: string | null
+          school_is_custom?: boolean | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_username_available: {
+        Args: { username_to_check: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

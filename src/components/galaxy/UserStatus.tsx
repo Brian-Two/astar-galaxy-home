@@ -1,4 +1,6 @@
-import { Star, Settings, LogOut } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Star, Settings, LogOut, Loader2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -11,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface UserStatusProps {
   name: string;
@@ -19,6 +23,31 @@ interface UserStatusProps {
 }
 
 export const UserStatus = ({ name, points, email = 'user@example.com' }: UserStatusProps) => {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      // Clear any local storage items
+      localStorage.removeItem('astar_onboarding_complete_animation_seen');
+      navigate('/auth', { replace: true });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Logout failed",
+        description: "There was an issue signing out. Redirecting to login...",
+      });
+      // Still redirect even if signOut fails
+      navigate('/auth', { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
     <div className="fixed top-6 right-6 z-40 flex items-center gap-3">
       {/* Points Box with Tooltip */}
@@ -58,9 +87,17 @@ export const UserStatus = ({ name, points, email = 'user@example.com' }: UserSta
             Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
-            <LogOut className="mr-2 h-4 w-4" />
-            Log out
+          <DropdownMenuItem 
+            className="cursor-pointer text-destructive focus:text-destructive"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <LogOut className="mr-2 h-4 w-4" />
+            )}
+            {isLoggingOut ? 'Logging out...' : 'Log out'}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

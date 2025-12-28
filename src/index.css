@@ -15,7 +15,7 @@
     --popover: 230 30% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 160 84% 39%;
+    --primary: 166 53% 54%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 230 25% 18%;
@@ -32,12 +32,12 @@
 
     --border: 230 20% 25%;
     --input: 230 20% 25%;
-    --ring: 160 84% 39%;
+    --ring: 166 53% 54%;
 
     --radius: 0.75rem;
 
     /* Custom ASTAR tokens */
-    --star-glow: 160 84% 39%;
+    --star-glow: 166 53% 54%;
     --space-deep: 230 35% 4%;
     --space-mid: 230 35% 7%;
     --nebula-purple: 270 60% 25%;
@@ -49,12 +49,12 @@
 
     --sidebar-background: 230 30% 10%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary: 166 53% 54%;
     --sidebar-primary-foreground: 210 40% 98%;
     --sidebar-accent: 230 25% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 230 20% 25%;
-    --sidebar-ring: 160 84% 39%;
+    --sidebar-ring: 166 53% 54%;
   }
 }
 

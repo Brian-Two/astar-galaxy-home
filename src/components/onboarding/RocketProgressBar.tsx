@@ -11,25 +11,27 @@ export function RocketProgressBar({ currentStep, totalSteps, className }: Rocket
   const progress = (currentStep / totalSteps) * 100;
   
   return (
-    <div className={cn("relative w-full overflow-visible", className)}>
+    <div className={cn("relative isolate w-full overflow-visible", className)}>
       {/* Track */}
-      <div className="h-1.5 w-full bg-secondary/50 rounded-full overflow-hidden mr-12">
+      <div className="relative z-0 h-1.5 w-full bg-secondary/50 rounded-full overflow-hidden mr-16 md:mr-20">
         {/* Fill */}
         <div 
-          className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
+          className="relative z-0 h-full bg-primary rounded-full transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
       
       {/* Rocket */}
       <div 
-        className="absolute top-1/2 -translate-y-1/2 transition-all duration-500 ease-out"
+        className="pointer-events-none absolute top-1/2 z-30 -translate-y-1/2 transition-all duration-500 ease-out"
         style={{ left: `calc(${progress}% - 48px)` }}
       >
+        {/* This subtle backing prevents the fill from showing through transparent pixels */}
+        <div className="absolute inset-2 -z-10 rounded-full bg-background/35 backdrop-blur-sm" />
         <img 
           src={rocketImage} 
           alt="Progress rocket" 
-          className="h-[72px] w-auto md:h-[88px] drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+          className="h-[72px] w-auto md:h-[88px] drop-shadow-[0_2px_10px_hsl(var(--foreground)_/_0.18)]"
         />
       </div>
     </div>

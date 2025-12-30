@@ -24,7 +24,7 @@ export function RocketProgressBar({ currentStep, totalSteps, className }: Rocket
       {/* Rocket */}
       <div 
         className="absolute top-1/2 -translate-y-1/2 transition-all duration-500 ease-out"
-        style={{ left: `calc(${progress}% - 48px)` }}
+        style={{ left: `calc(${progress}% - 12px)` }}
       >
         <img 
           src={rocketImage} 

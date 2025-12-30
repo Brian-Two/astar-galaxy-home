@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { X, Plus, Trash2, ChevronRight, ChevronLeft, Check } from 'lucide-react';
+import { X, Plus, Trash2, ChevronRight, ChevronLeft, Check, Loader2, RefreshCw, Sparkles, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -11,14 +12,33 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
   Agent,
   AgentTemplate,
   AgentGuardrails,
   LearningObjective,
   ScaffoldingLevel,
   agentTemplates,
+  agentTemplatesByCategory,
+  categoryLabels,
   PlanetSource,
+  ideaCards,
+  GeneratedAgentSetup,
 } from './types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CreateAgentModalProps {
   open: boolean;
@@ -42,6 +62,8 @@ export function CreateAgentModal({
   const [step, setStep] = useState<Step>(1);
   const [selectedTemplate, setSelectedTemplate] = useState<AgentTemplate | null>(null);
   const [agentName, setAgentName] = useState('');
+  const [shortDescription, setShortDescription] = useState('');
+  const [detailedDescription, setDetailedDescription] = useState('');
   const [objectives, setObjectives] = useState<LearningObjective[]>([
     { id: '1', text: '', showToOthers: true },
   ]);
@@ -55,11 +77,17 @@ export function CreateAgentModal({
     customAvoid: '',
   });
   const [scaffoldingLevel, setScaffoldingLevel] = useState<ScaffoldingLevel>('medium');
+  const [scaffoldingBehaviors, setScaffoldingBehaviors] = useState<string[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const resetForm = () => {
     setStep(1);
     setSelectedTemplate(null);
     setAgentName('');
+    setShortDescription('');
+    setDetailedDescription('');
     setObjectives([{ id: '1', text: '', showToOthers: true }]);
     setSelectedSourceIds([]);
     setUseAllSources(false);
@@ -71,6 +99,10 @@ export function CreateAgentModal({
       customAvoid: '',
     });
     setScaffoldingLevel('medium');
+    setScaffoldingBehaviors([]);
+    setIsGenerating(false);
+    setHasGenerated(false);
+    setPreviewOpen(false);
   };
 
   const handleClose = () => {
@@ -81,7 +113,7 @@ export function CreateAgentModal({
   const canProceed = () => {
     switch (step) {
       case 1:
-        return selectedTemplate && agentName.trim();
+        return selectedTemplate && agentName.trim() && hasGenerated && objectives.some(o => o.text.trim());
       case 2:
         return objectives.some(o => o.text.trim());
       case 3:
@@ -101,19 +133,20 @@ export function CreateAgentModal({
     onCreateAgent({
       name: agentName,
       template: selectedTemplate,
-      description: template?.description || '',
+      description: shortDescription || template?.description || '',
       learningObjectives: objectives.filter(o => o.text.trim()),
       selectedSourceIds,
       useAllSources,
       guardrails,
       scaffoldingLevel,
+      scaffoldingBehaviors,
       planetId,
     });
     handleClose();
   };
 
   const addObjective = () => {
-    if (objectives.length < 3) {
+    if (objectives.length < 6) {
       setObjectives([...objectives, { id: String(Date.now()), text: '', showToOthers: true }]);
     }
   };
@@ -136,44 +169,161 @@ export function CreateAgentModal({
     );
   };
 
+  const handleGenerateSetup = async () => {
+    if (!selectedTemplate || !agentName.trim() || !detailedDescription.trim()) return;
+    
+    setIsGenerating(true);
+    try {
+      const templateInfo = agentTemplates.find(t => t.id === selectedTemplate);
+      
+      const { data, error } = await supabase.functions.invoke('generate-agent-setup', {
+        body: {
+          agentType: templateInfo?.name || selectedTemplate,
+          agentName: agentName,
+          description: detailedDescription,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      const setup = data as GeneratedAgentSetup;
+      
+      // Apply generated setup
+      setObjectives(
+        setup.learning_objectives.map((text, i) => ({
+          id: String(Date.now() + i),
+          text,
+          showToOthers: true,
+        }))
+      );
+      
+      setGuardrails({
+        dontGiveFullAnswers: setup.guardrails.dont_give_full_answers_immediately,
+        askWhatKnown: setup.guardrails.ask_what_i_know_first,
+        stayWithinSources: setup.guardrails.stay_within_selected_sources,
+        keepConcise: setup.guardrails.keep_responses_concise,
+        customAvoid: setup.guardrails.avoid_or_never_do.join('\n'),
+      });
+      
+      setScaffoldingLevel(setup.scaffolding.level);
+      setScaffoldingBehaviors(setup.scaffolding.behaviors);
+      
+      setHasGenerated(true);
+      setPreviewOpen(true);
+      toast.success('Setup generated! Review and edit below.');
+    } catch (err) {
+      console.error('Generation error:', err);
+      toast.error('Failed to generate setup. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleIdeaCardClick = (ideaCard: typeof ideaCards[0]) => {
+    setSelectedTemplate(ideaCard.template);
+    setAgentName(ideaCard.title);
+    setDetailedDescription(ideaCard.description);
+    // Auto-generate after a brief delay to let state update
+    setTimeout(() => {
+      handleGenerateSetupForIdea(ideaCard);
+    }, 100);
+  };
+
+  const handleGenerateSetupForIdea = async (ideaCard: typeof ideaCards[0]) => {
+    setIsGenerating(true);
+    try {
+      const templateInfo = agentTemplates.find(t => t.id === ideaCard.template);
+      
+      const { data, error } = await supabase.functions.invoke('generate-agent-setup', {
+        body: {
+          agentType: templateInfo?.name || ideaCard.template,
+          agentName: ideaCard.title,
+          description: ideaCard.description,
+        },
+      });
+
+      if (error) throw error;
+
+      const setup = data as GeneratedAgentSetup;
+      
+      setObjectives(
+        setup.learning_objectives.map((text, i) => ({
+          id: String(Date.now() + i),
+          text,
+          showToOthers: true,
+        }))
+      );
+      
+      setGuardrails({
+        dontGiveFullAnswers: setup.guardrails.dont_give_full_answers_immediately,
+        askWhatKnown: setup.guardrails.ask_what_i_know_first,
+        stayWithinSources: setup.guardrails.stay_within_selected_sources,
+        keepConcise: setup.guardrails.keep_responses_concise,
+        customAvoid: setup.guardrails.avoid_or_never_do.join('\n'),
+      });
+      
+      setScaffoldingLevel(setup.scaffolding.level);
+      setScaffoldingBehaviors(setup.scaffolding.behaviors);
+      
+      setHasGenerated(true);
+      setPreviewOpen(true);
+      toast.success('Setup generated from idea!');
+    } catch (err) {
+      console.error('Generation error:', err);
+      toast.error('Failed to generate setup. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    await handleGenerateSetup();
+  };
+
+  const canGenerate = selectedTemplate && agentName.trim() && detailedDescription.trim();
+
   const renderStep = () => {
     switch (step) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-5">
+            {/* Agent Type Dropdown */}
             <div>
-              <h3 className="text-lg font-medium text-foreground mb-3">Choose an agent type</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {agentTemplates.map(template => {
-                  const IconComponent = template.icon;
-                  return (
-                    <button
-                      key={template.id}
-                      onClick={() => setSelectedTemplate(template.id)}
-                      className={`p-4 rounded-lg border text-left transition-all ${
-                        selectedTemplate === template.id
-                          ? 'border-2 bg-slate-800/50'
-                          : 'border-slate-700 hover:border-slate-600 bg-slate-900/50'
-                      }`}
-                      style={{
-                        borderColor: selectedTemplate === template.id ? planetColor : undefined,
-                      }}
-                    >
-                      <div className="mb-2">
-                        <IconComponent 
-                          className="w-6 h-6" 
-                          style={{ color: selectedTemplate === template.id ? planetColor : '#94a3b8' }}
-                        />
-                      </div>
-                      <div className="font-medium text-foreground">{template.name}</div>
-                      <div className="text-xs text-muted-foreground mt-1">{template.description}</div>
-                    </button>
-                  );
-                })}
-              </div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Agent type</label>
+              <Select
+                value={selectedTemplate || ''}
+                onValueChange={(value) => setSelectedTemplate(value as AgentTemplate)}
+              >
+                <SelectTrigger className="bg-slate-900/50 border-slate-700">
+                  <SelectValue placeholder="Select an agent type..." />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-slate-700">
+                  {(Object.keys(agentTemplatesByCategory) as Array<keyof typeof agentTemplatesByCategory>).map((category) => (
+                    <SelectGroup key={category}>
+                      <SelectLabel className="text-muted-foreground font-semibold">{categoryLabels[category]}</SelectLabel>
+                      {agentTemplatesByCategory[category].map((template) => {
+                        const IconComponent = template.icon;
+                        return (
+                          <SelectItem key={template.id} value={template.id} className="cursor-pointer">
+                            <div className="flex items-center gap-2">
+                              <IconComponent className="w-4 h-4" style={{ color: planetColor }} />
+                              <span>{template.name}</span>
+                              <span className="text-muted-foreground text-xs ml-1">– {template.description}</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* Agent Name */}
             <div>
-              <h3 className="text-lg font-medium text-foreground mb-2">Name your agent</h3>
+              <label className="text-sm font-medium text-foreground mb-2 block">Name your agent</label>
               <Input
                 value={agentName}
                 onChange={e => setAgentName(e.target.value)}
@@ -181,17 +331,156 @@ export function CreateAgentModal({
                 className="bg-slate-900/50 border-slate-700"
               />
             </div>
+
+            {/* Short Description */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Short description <span className="text-muted-foreground font-normal">(optional)</span></label>
+              <Input
+                value={shortDescription}
+                onChange={e => setShortDescription(e.target.value)}
+                placeholder="e.g., Helps me master forces and motion"
+                className="bg-slate-900/50 border-slate-700"
+              />
+            </div>
+
+            {/* Detailed Description */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Describe what you want this agent to do</label>
+              <Textarea
+                value={detailedDescription}
+                onChange={e => setDetailedDescription(e.target.value)}
+                placeholder="Help me learn MIPS by asking me questions, generating practice problems, and only giving hints until I try…"
+                className="bg-slate-900/50 border-slate-700 min-h-[100px]"
+              />
+            </div>
+
+            {/* Generate Button */}
+            <Button
+              onClick={handleGenerateSetup}
+              disabled={!canGenerate || isGenerating}
+              className="w-full"
+              style={{ backgroundColor: canGenerate ? planetColor : undefined }}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate setup
+                </>
+              )}
+            </Button>
+
+            {/* Generated Preview */}
+            {hasGenerated && (
+              <Collapsible open={previewOpen} onOpenChange={setPreviewOpen} className="space-y-2">
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg bg-slate-900/50 border border-slate-700 hover:bg-slate-800/50 transition-colors">
+                  <span className="text-sm font-medium text-foreground">Generated setup</span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRegenerate();
+                      }}
+                      className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Regenerate
+                    </Button>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${previewOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-3 pt-2">
+                  {/* Learning Objectives Preview */}
+                  <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-800">
+                    <div className="text-xs text-muted-foreground mb-2">Learning Objectives</div>
+                    <div className="space-y-1">
+                      {objectives.filter(o => o.text.trim()).map((obj, i) => (
+                        <div key={obj.id} className="text-sm text-foreground flex items-start gap-2">
+                          <span className="text-muted-foreground">{i + 1}.</span>
+                          <span>{obj.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Guardrails Preview */}
+                  <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-800">
+                    <div className="text-xs text-muted-foreground mb-2">Guardrails</div>
+                    <div className="flex flex-wrap gap-2">
+                      {guardrails.dontGiveFullAnswers && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-slate-800 text-foreground">No full answers</span>
+                      )}
+                      {guardrails.askWhatKnown && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-slate-800 text-foreground">Ask first</span>
+                      )}
+                      {guardrails.stayWithinSources && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-slate-800 text-foreground">Stay in sources</span>
+                      )}
+                      {guardrails.keepConcise && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-slate-800 text-foreground">Concise</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Scaffolding Preview */}
+                  <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-800">
+                    <div className="text-xs text-muted-foreground mb-2">Scaffolding: {scaffoldingLevel}</div>
+                    <div className="space-y-1">
+                      {scaffoldingBehaviors.slice(0, 3).map((behavior, i) => (
+                        <div key={i} className="text-sm text-foreground">• {behavior}</div>
+                      ))}
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+
+            {/* Idea Cards */}
+            <div className="pt-4 border-t border-slate-800">
+              <h4 className="text-sm font-medium text-muted-foreground mb-3">Ideas</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {ideaCards.map((idea) => (
+                  <button
+                    key={idea.id}
+                    onClick={() => handleIdeaCardClick(idea)}
+                    disabled={isGenerating}
+                    className="p-3 rounded-lg border border-slate-700 bg-slate-900/30 hover:bg-slate-800/50 hover:border-slate-600 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="text-sm font-medium text-foreground group-hover:text-white transition-colors">{idea.title}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         );
 
       case 2:
         return (
           <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-medium text-foreground mb-2">Learning objectives</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Define what this agent should help you achieve. These objectives will be used later to award stars when you hit them.
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-foreground mb-2">Learning objectives</h3>
+                <p className="text-sm text-muted-foreground">
+                  Define what this agent should help you achieve. These objectives will be used later to award stars when you hit them.
+                </p>
+              </div>
+              {hasGenerated && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRegenerate}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Regenerate
+                </Button>
+              )}
             </div>
             <div className="space-y-3">
               {objectives.map((obj, i) => (
@@ -216,7 +505,7 @@ export function CreateAgentModal({
                 </div>
               ))}
             </div>
-            {objectives.length < 3 && (
+            {objectives.length < 6 && (
               <Button variant="outline" size="sm" onClick={addObjective} className="mt-2">
                 <Plus className="w-4 h-4 mr-1" /> Add objective
               </Button>
@@ -280,11 +569,24 @@ export function CreateAgentModal({
       case 4:
         return (
           <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-medium text-foreground mb-2">AI Guardrails</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Set boundaries for how this agent should behave.
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-foreground mb-2">AI Guardrails</h3>
+                <p className="text-sm text-muted-foreground">
+                  Set boundaries for how this agent should behave.
+                </p>
+              </div>
+              {hasGenerated && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRegenerate}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Regenerate
+                </Button>
+              )}
             </div>
             <div className="space-y-3">
               {[
@@ -324,11 +626,24 @@ export function CreateAgentModal({
       case 5:
         return (
           <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-medium text-foreground mb-2">Scaffolding level</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Determine how much support the agent should give you.
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-foreground mb-2">Scaffolding level</h3>
+                <p className="text-sm text-muted-foreground">
+                  Determine how much support the agent should give you.
+                </p>
+              </div>
+              {hasGenerated && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRegenerate}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Regenerate
+                </Button>
+              )}
             </div>
             <div className="space-y-3">
               {[
@@ -353,6 +668,16 @@ export function CreateAgentModal({
                 </button>
               ))}
             </div>
+            {scaffoldingBehaviors.length > 0 && (
+              <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-800 mt-4">
+                <div className="text-xs text-muted-foreground mb-2">Generated behaviors</div>
+                <div className="space-y-1">
+                  {scaffoldingBehaviors.map((behavior, i) => (
+                    <div key={i} className="text-sm text-foreground">• {behavior}</div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -392,6 +717,13 @@ export function CreateAgentModal({
               <div>
                 <span className="text-muted-foreground text-sm">Scaffolding:</span>
                 <div className="text-foreground text-sm capitalize">{scaffoldingLevel} support</div>
+                {scaffoldingBehaviors.length > 0 && (
+                  <ul className="list-disc list-inside text-muted-foreground text-xs mt-1">
+                    {scaffoldingBehaviors.slice(0, 3).map((b, i) => (
+                      <li key={i}>{b}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           </div>
@@ -400,7 +732,7 @@ export function CreateAgentModal({
   };
 
   const stepTitles = [
-    'Type & Name',
+    'Describe Agent',
     'Objectives',
     'Sources',
     'Guardrails',
@@ -410,7 +742,7 @@ export function CreateAgentModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-slate-950 border-slate-800">
+      <DialogContent className="sm:max-w-lg bg-slate-950 border-slate-800 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">Create new agent</DialogTitle>
         </DialogHeader>
@@ -423,7 +755,10 @@ export function CreateAgentModal({
                 className={`h-1.5 rounded-full transition-all ${
                   i + 1 <= step ? 'bg-emerald-500' : 'bg-slate-700'
                 }`}
-                style={{ width: i === step - 1 ? '32px' : '16px' }}
+                style={{ 
+                  width: i === step - 1 ? '32px' : '16px',
+                  backgroundColor: i + 1 <= step ? planetColor : undefined,
+                }}
               />
             </div>
           ))}

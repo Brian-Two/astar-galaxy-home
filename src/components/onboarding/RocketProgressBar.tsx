@@ -24,12 +24,12 @@ export function RocketProgressBar({ currentStep, totalSteps, className }: Rocket
       {/* Rocket */}
       <div 
         className="absolute top-1/2 -translate-y-1/2 transition-all duration-500 ease-out"
-        style={{ left: `calc(${progress}% - 11px)` }}
+        style={{ left: `calc(${progress}% - 48px)` }}
       >
         <img 
           src={rocketImage} 
           alt="Progress rocket" 
-          className="h-[64px] w-auto md:h-[80px] drop-shadow-lg"
+          className="h-[72px] w-auto md:h-[88px] drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
         />
       </div>
     </div>

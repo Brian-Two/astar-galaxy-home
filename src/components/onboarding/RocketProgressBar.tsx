@@ -11,9 +11,9 @@ export function RocketProgressBar({ currentStep, totalSteps, className }: Rocket
   const progress = (currentStep / totalSteps) * 100;
   
   return (
-    <div className={cn("relative w-full", className)}>
+    <div className={cn("relative w-full overflow-visible", className)}>
       {/* Track */}
-      <div className="h-1.5 w-full bg-secondary/50 rounded-full overflow-hidden">
+      <div className="h-1.5 w-full bg-secondary/50 rounded-full overflow-hidden mr-12">
         {/* Fill */}
         <div 
           className="h-full bg-primary rounded-full transition-all duration-500 ease-out"

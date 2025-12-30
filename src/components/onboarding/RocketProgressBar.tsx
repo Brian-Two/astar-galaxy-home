@@ -29,7 +29,7 @@ export function RocketProgressBar({ currentStep, totalSteps, className }: Rocket
         <img 
           src={rocketImage} 
           alt="Progress rocket" 
-          className="h-[32px] w-auto md:h-[40px] drop-shadow-lg"
+          className="h-[64px] w-auto md:h-[80px] drop-shadow-lg"
         />
       </div>
     </div>

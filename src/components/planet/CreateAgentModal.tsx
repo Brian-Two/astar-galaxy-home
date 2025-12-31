@@ -22,6 +22,16 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Agent,
   AgentTemplate,
   AgentGuardrails,
@@ -35,6 +45,8 @@ import {
 } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { usePlanetSources } from '@/hooks/usePlanetSources';
+import { FileUpload } from '@/components/sources/FileUpload';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CreateAgentModalProps {
   open: boolean;
@@ -53,6 +65,7 @@ export function CreateAgentModal({
   planetId,
   planetColor,
 }: CreateAgentModalProps) {
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>(1);
   const [selectedTemplate, setSelectedTemplate] = useState<AgentTemplate | null>(null);
   const [agentName, setAgentName] = useState('');
@@ -72,7 +85,10 @@ export function CreateAgentModal({
   });
   const [scaffoldingLevel, setScaffoldingLevel] = useState<ScaffoldingLevel>('medium');
   const [scaffoldingBehaviors, setScaffoldingBehaviors] = useState<string[]>([]);
+  const [behaviorsEdited, setBehaviorsEdited] = useState(false);
+  const [pendingLevelChange, setPendingLevelChange] = useState<ScaffoldingLevel | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRegeneratingBehaviors, setIsRegeneratingBehaviors] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
   
   // Add source form state
@@ -110,7 +126,10 @@ export function CreateAgentModal({
     });
     setScaffoldingLevel('medium');
     setScaffoldingBehaviors([]);
+    setBehaviorsEdited(false);
+    setPendingLevelChange(null);
     setIsGenerating(false);
+    setIsRegeneratingBehaviors(false);
     setHasGenerated(false);
     setAddSourceOpen(false);
     setNewSourceType('link');
@@ -132,6 +151,113 @@ export function CreateAgentModal({
       setNewSourceType('link');
       setAddSourceOpen(false);
     }
+  };
+
+  const handleFileUploadComplete = async (fileData: {
+    title: string;
+    url: string;
+    file_name: string;
+    mime_type: string;
+    size_bytes: number;
+  }) => {
+    if (!user || !planetId) return;
+
+    try {
+      const sourceData = {
+        planet_id: planetId,
+        user_id: user.id,
+        title: fileData.title,
+        type: 'file' as const,
+        url: fileData.url,
+        file_name: fileData.file_name,
+        mime_type: fileData.mime_type,
+        size_bytes: fileData.size_bytes,
+      };
+
+      const { error } = await supabase
+        .from('sources')
+        .insert(sourceData);
+
+      if (error) throw error;
+
+      setAddSourceOpen(false);
+      setNewSourceType('link');
+      toast.success('File uploaded!');
+    } catch (error) {
+      console.error('Error saving file source:', error);
+      toast.error('Failed to save file');
+    }
+  };
+
+  // Generate behaviors based on scaffolding level
+  const generateBehaviorsForLevel = async (level: ScaffoldingLevel) => {
+    if (!selectedTemplate || !detailedDescription.trim()) return;
+    
+    setIsRegeneratingBehaviors(true);
+    try {
+      const templateInfo = agentTemplates.find(t => t.id === selectedTemplate);
+      
+      const { data, error } = await supabase.functions.invoke('generate-agent-setup', {
+        body: {
+          agentType: templateInfo?.name || selectedTemplate,
+          agentName: agentName,
+          description: detailedDescription,
+          scaffoldingLevel: level,
+        },
+      });
+
+      if (error) throw error;
+
+      const setup = data as GeneratedAgentSetup;
+      setScaffoldingBehaviors(setup.scaffolding.behaviors);
+      setBehaviorsEdited(false);
+      toast.success('Behaviors regenerated!');
+    } catch (err) {
+      console.error('Error regenerating behaviors:', err);
+      toast.error('Failed to regenerate behaviors');
+    } finally {
+      setIsRegeneratingBehaviors(false);
+    }
+  };
+
+  const handleScaffoldingLevelChange = (newLevel: ScaffoldingLevel) => {
+    if (newLevel === scaffoldingLevel) return;
+    
+    if (behaviorsEdited && scaffoldingBehaviors.length > 0) {
+      // User has edited behaviors, show confirmation
+      setPendingLevelChange(newLevel);
+    } else {
+      // No edits, just change and regenerate
+      setScaffoldingLevel(newLevel);
+      generateBehaviorsForLevel(newLevel);
+    }
+  };
+
+  const confirmLevelChange = () => {
+    if (pendingLevelChange) {
+      setScaffoldingLevel(pendingLevelChange);
+      generateBehaviorsForLevel(pendingLevelChange);
+      setPendingLevelChange(null);
+    }
+  };
+
+  const cancelLevelChange = () => {
+    setPendingLevelChange(null);
+  };
+
+  const updateBehavior = (index: number, text: string) => {
+    setScaffoldingBehaviors(prev => prev.map((b, i) => i === index ? text : b));
+    setBehaviorsEdited(true);
+  };
+
+  const removeBehavior = (index: number) => {
+    setScaffoldingBehaviors(prev => prev.filter((_, i) => i !== index));
+    setBehaviorsEdited(true);
+  };
+
+  const addBehavior = () => {
+    setScaffoldingBehaviors(prev => [...prev, '']);
+    setBehaviorsEdited(true);
   };
 
   const typeIcons = {
@@ -576,12 +702,14 @@ export function CreateAgentModal({
                   </TabsList>
                 </Tabs>
 
-                <Input
-                  placeholder="Title"
-                  value={newSourceTitle}
-                  onChange={(e) => setNewSourceTitle(e.target.value)}
-                  className="bg-slate-900/50 border-slate-700 h-8 text-sm"
-                />
+                {newSourceType !== 'file' && (
+                  <Input
+                    placeholder="Title"
+                    value={newSourceTitle}
+                    onChange={(e) => setNewSourceTitle(e.target.value)}
+                    className="bg-slate-900/50 border-slate-700 h-8 text-sm"
+                  />
+                )}
 
                 {newSourceType === 'link' && (
                   <Input
@@ -602,24 +730,29 @@ export function CreateAgentModal({
                 )}
 
                 {newSourceType === 'file' && (
-                  <p className="text-xs text-muted-foreground">
-                    File upload coming soon. Use the Sources page for file uploads.
-                  </p>
+                  <FileUpload
+                    planetId={planetId}
+                    onUploadComplete={handleFileUploadComplete}
+                    onCancel={() => setAddSourceOpen(false)}
+                    planetColor={planetColor}
+                  />
                 )}
 
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setAddSourceOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={handleAddSourceSubmit}
-                    disabled={!newSourceTitle.trim() || submitting}
-                    style={{ backgroundColor: planetColor }}
-                  >
-                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
-                  </Button>
-                </div>
+                {newSourceType !== 'file' && (
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setAddSourceOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={handleAddSourceSubmit}
+                      disabled={!newSourceTitle.trim() || submitting}
+                      style={{ backgroundColor: planetColor }}
+                    >
+                      {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -692,15 +825,20 @@ export function CreateAgentModal({
                   Determine how much support the agent should give you.
                 </p>
               </div>
-              {hasGenerated && (
+              {scaffoldingBehaviors.length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleRegenerate}
+                  onClick={() => generateBehaviorsForLevel(scaffoldingLevel)}
+                  disabled={isRegeneratingBehaviors}
                   className="text-muted-foreground hover:text-foreground"
                 >
-                  <RefreshCw className="w-3 h-3 mr-1" />
-                  Regenerate
+                  {isRegeneratingBehaviors ? (
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                  )}
+                  Regenerate behaviors
                 </Button>
               )}
             </div>
@@ -712,12 +850,13 @@ export function CreateAgentModal({
               ].map(item => (
                 <button
                   key={item.level}
-                  onClick={() => setScaffoldingLevel(item.level)}
+                  onClick={() => handleScaffoldingLevelChange(item.level)}
+                  disabled={isRegeneratingBehaviors}
                   className={`w-full p-4 rounded-lg border text-left transition-all ${
                     scaffoldingLevel === item.level
                       ? 'border-2 bg-slate-800/50'
                       : 'border-slate-700 hover:border-slate-600 bg-slate-900/50'
-                  }`}
+                  } ${isRegeneratingBehaviors ? 'opacity-50 cursor-not-allowed' : ''}`}
                   style={{
                     borderColor: scaffoldingLevel === item.level ? planetColor : undefined,
                   }}
@@ -727,16 +866,55 @@ export function CreateAgentModal({
                 </button>
               ))}
             </div>
-            {scaffoldingBehaviors.length > 0 && (
-              <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-800 mt-4">
-                <div className="text-xs text-muted-foreground mb-2">Generated behaviors</div>
-                <div className="space-y-1">
-                  {scaffoldingBehaviors.map((behavior, i) => (
-                    <div key={i} className="text-sm text-foreground">• {behavior}</div>
-                  ))}
-                </div>
+
+            {/* Editable behaviors list */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm font-medium text-foreground">Behaviors</div>
+                {behaviorsEdited && (
+                  <span className="text-xs text-muted-foreground">(edited)</span>
+                )}
               </div>
-            )}
+              
+              {isRegeneratingBehaviors ? (
+                <div className="flex items-center justify-center py-8 bg-slate-900/30 rounded-lg border border-slate-800">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : scaffoldingBehaviors.length === 0 ? (
+                <div className="text-center py-6 bg-slate-900/30 rounded-lg border border-slate-800">
+                  <p className="text-sm text-muted-foreground mb-2">No behaviors yet</p>
+                  <Button variant="outline" size="sm" onClick={addBehavior}>
+                    <Plus className="w-4 h-4 mr-1" /> Add behavior
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {scaffoldingBehaviors.map((behavior, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <Input
+                        value={behavior}
+                        onChange={(e) => updateBehavior(i, e.target.value)}
+                        placeholder="Describe a behavior..."
+                        className="bg-slate-900/50 border-slate-700 flex-1"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeBehavior(i)}
+                        className="shrink-0 text-muted-foreground hover:text-red-400"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {scaffoldingBehaviors.length < 7 && (
+                    <Button variant="outline" size="sm" onClick={addBehavior} className="mt-2">
+                      <Plus className="w-4 h-4 mr-1" /> Add behavior
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         );
 
@@ -800,6 +978,7 @@ export function CreateAgentModal({
   ];
 
   return (
+  <>
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg bg-slate-950 border-slate-800 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -869,5 +1048,24 @@ export function CreateAgentModal({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Confirmation dialog for level change when behaviors edited */}
+    <AlertDialog open={!!pendingLevelChange} onOpenChange={() => setPendingLevelChange(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Replace behaviors?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Changing support level will regenerate behaviors. Your current edits will be lost.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={cancelLevelChange}>Keep my edits</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmLevelChange} style={{ backgroundColor: planetColor }}>
+            Replace behaviors
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   );
 }

@@ -1,1 +1,4 @@
 project_id = "aiweyxkcyirjvgtpjvsx"
+
+[functions.generate-agent-setup]
+verify_jwt = false

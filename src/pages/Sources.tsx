@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { subjects } from '@/data/subjects';
-import { Sidebar } from '@/components/navigation/Sidebar';
+import { CollapsedSidebar } from '@/components/navigation/CollapsedSidebar';
 
 export interface Source {
   id: string;
@@ -238,7 +238,7 @@ const Sources = () => {
   return (
     <div className="min-h-screen flex w-full bg-background overflow-hidden relative">
       {/* Global Sidebar */}
-      <Sidebar />
+      <CollapsedSidebar />
 
       {/* Main content area */}
       <div 
@@ -375,22 +375,12 @@ const Sources = () => {
                 </div>
               ) : filteredSources.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-muted-foreground">
                     {filter === 'all' 
                       ? 'No sources yet. Add your first source to get started.'
                       : `No ${typeLabels[filter as keyof typeof typeLabels].toLowerCase()} found.`
                     }
                   </p>
-                  {filter === 'all' && (
-                    <Button
-                      onClick={() => setAddDialogOpen(true)}
-                      style={{ backgroundColor: subject.color }}
-                      className="hover:opacity-90"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add source
-                    </Button>
-                  )}
                 </div>
               ) : (
                 <div className="space-y-2">

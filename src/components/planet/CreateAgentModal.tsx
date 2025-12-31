@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Plus, Trash2, ChevronRight, ChevronLeft, Check, Loader2, RefreshCw, Sparkles, ChevronDown } from 'lucide-react';
+import { X, Plus, Trash2, ChevronRight, ChevronLeft, Check, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,11 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import {
   Agent,
   AgentTemplate,
@@ -80,7 +75,7 @@ export function CreateAgentModal({
   const [scaffoldingBehaviors, setScaffoldingBehaviors] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  
 
   const resetForm = () => {
     setStep(1);
@@ -102,7 +97,7 @@ export function CreateAgentModal({
     setScaffoldingBehaviors([]);
     setIsGenerating(false);
     setHasGenerated(false);
-    setPreviewOpen(false);
+    
   };
 
   const handleClose = () => {
@@ -113,7 +108,7 @@ export function CreateAgentModal({
   const canProceed = () => {
     switch (step) {
       case 1:
-        return selectedTemplate && agentName.trim() && hasGenerated && objectives.some(o => o.text.trim());
+        return selectedTemplate && agentName.trim() && detailedDescription.trim();
       case 2:
         return objectives.some(o => o.text.trim());
       case 3:
@@ -123,6 +118,54 @@ export function CreateAgentModal({
         return true;
       default:
         return false;
+    }
+  };
+
+  // Auto-generate when moving from step 1 to step 2
+  const handleNextFromStep1 = async () => {
+    if (!selectedTemplate || !agentName.trim() || !detailedDescription.trim()) return;
+    
+    setIsGenerating(true);
+    try {
+      const templateInfo = agentTemplates.find(t => t.id === selectedTemplate);
+      
+      const { data, error } = await supabase.functions.invoke('generate-agent-setup', {
+        body: {
+          agentType: templateInfo?.name || selectedTemplate,
+          agentName: agentName,
+          description: detailedDescription,
+        },
+      });
+
+      if (error) throw error;
+
+      const setup = data as GeneratedAgentSetup;
+      
+      setObjectives(
+        setup.learning_objectives.map((text, i) => ({
+          id: String(Date.now() + i),
+          text,
+          showToOthers: true,
+        }))
+      );
+      
+      setGuardrails({
+        dontGiveFullAnswers: setup.guardrails.dont_give_full_answers_immediately,
+        askWhatKnown: setup.guardrails.ask_what_i_know_first,
+        stayWithinSources: setup.guardrails.stay_within_selected_sources,
+        keepConcise: setup.guardrails.keep_responses_concise,
+        customAvoid: setup.guardrails.avoid_or_never_do.join('\n'),
+      });
+      
+      setScaffoldingLevel(setup.scaffolding.level);
+      setScaffoldingBehaviors(setup.scaffolding.behaviors);
+      setHasGenerated(true);
+      setStep(2);
+    } catch (err) {
+      console.error('Generation error:', err);
+      toast.error('Failed to generate setup. Please try again.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -169,7 +212,13 @@ export function CreateAgentModal({
     );
   };
 
-  const handleGenerateSetup = async () => {
+  const handleIdeaCardClick = (ideaCard: typeof ideaCards[0]) => {
+    setSelectedTemplate(ideaCard.template);
+    setAgentName(ideaCard.title);
+    setDetailedDescription(ideaCard.description);
+  };
+
+  const handleRegenerate = async () => {
     if (!selectedTemplate || !agentName.trim() || !detailedDescription.trim()) return;
     
     setIsGenerating(true);
@@ -181,66 +230,6 @@ export function CreateAgentModal({
           agentType: templateInfo?.name || selectedTemplate,
           agentName: agentName,
           description: detailedDescription,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      const setup = data as GeneratedAgentSetup;
-      
-      // Apply generated setup
-      setObjectives(
-        setup.learning_objectives.map((text, i) => ({
-          id: String(Date.now() + i),
-          text,
-          showToOthers: true,
-        }))
-      );
-      
-      setGuardrails({
-        dontGiveFullAnswers: setup.guardrails.dont_give_full_answers_immediately,
-        askWhatKnown: setup.guardrails.ask_what_i_know_first,
-        stayWithinSources: setup.guardrails.stay_within_selected_sources,
-        keepConcise: setup.guardrails.keep_responses_concise,
-        customAvoid: setup.guardrails.avoid_or_never_do.join('\n'),
-      });
-      
-      setScaffoldingLevel(setup.scaffolding.level);
-      setScaffoldingBehaviors(setup.scaffolding.behaviors);
-      
-      setHasGenerated(true);
-      setPreviewOpen(true);
-      toast.success('Setup generated! Review and edit below.');
-    } catch (err) {
-      console.error('Generation error:', err);
-      toast.error('Failed to generate setup. Please try again.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleIdeaCardClick = (ideaCard: typeof ideaCards[0]) => {
-    setSelectedTemplate(ideaCard.template);
-    setAgentName(ideaCard.title);
-    setDetailedDescription(ideaCard.description);
-    // Auto-generate after a brief delay to let state update
-    setTimeout(() => {
-      handleGenerateSetupForIdea(ideaCard);
-    }, 100);
-  };
-
-  const handleGenerateSetupForIdea = async (ideaCard: typeof ideaCards[0]) => {
-    setIsGenerating(true);
-    try {
-      const templateInfo = agentTemplates.find(t => t.id === ideaCard.template);
-      
-      const { data, error } = await supabase.functions.invoke('generate-agent-setup', {
-        body: {
-          agentType: templateInfo?.name || ideaCard.template,
-          agentName: ideaCard.title,
-          description: ideaCard.description,
         },
       });
 
@@ -266,23 +255,14 @@ export function CreateAgentModal({
       
       setScaffoldingLevel(setup.scaffolding.level);
       setScaffoldingBehaviors(setup.scaffolding.behaviors);
-      
-      setHasGenerated(true);
-      setPreviewOpen(true);
-      toast.success('Setup generated from idea!');
+      toast.success('Setup regenerated!');
     } catch (err) {
-      console.error('Generation error:', err);
-      toast.error('Failed to generate setup. Please try again.');
+      console.error('Regeneration error:', err);
+      toast.error('Failed to regenerate setup. Please try again.');
     } finally {
       setIsGenerating(false);
     }
   };
-
-  const handleRegenerate = async () => {
-    await handleGenerateSetup();
-  };
-
-  const canGenerate = selectedTemplate && agentName.trim() && detailedDescription.trim();
 
   const renderStep = () => {
     switch (step) {
@@ -354,92 +334,6 @@ export function CreateAgentModal({
               />
             </div>
 
-            {/* Generate Button */}
-            <Button
-              onClick={handleGenerateSetup}
-              disabled={!canGenerate || isGenerating}
-              className="w-full"
-              style={{ backgroundColor: canGenerate ? planetColor : undefined }}
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate setup
-                </>
-              )}
-            </Button>
-
-            {/* Generated Preview */}
-            {hasGenerated && (
-              <Collapsible open={previewOpen} onOpenChange={setPreviewOpen} className="space-y-2">
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg bg-slate-900/50 border border-slate-700 hover:bg-slate-800/50 transition-colors">
-                  <span className="text-sm font-medium text-foreground">Generated setup</span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRegenerate();
-                      }}
-                      className="h-7 px-2 text-muted-foreground hover:text-foreground"
-                    >
-                      <RefreshCw className="w-3 h-3 mr-1" />
-                      Regenerate
-                    </Button>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${previewOpen ? 'rotate-180' : ''}`} />
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-3 pt-2">
-                  {/* Learning Objectives Preview */}
-                  <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-800">
-                    <div className="text-xs text-muted-foreground mb-2">Learning Objectives</div>
-                    <div className="space-y-1">
-                      {objectives.filter(o => o.text.trim()).map((obj, i) => (
-                        <div key={obj.id} className="text-sm text-foreground flex items-start gap-2">
-                          <span className="text-muted-foreground">{i + 1}.</span>
-                          <span>{obj.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Guardrails Preview */}
-                  <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-800">
-                    <div className="text-xs text-muted-foreground mb-2">Guardrails</div>
-                    <div className="flex flex-wrap gap-2">
-                      {guardrails.dontGiveFullAnswers && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-slate-800 text-foreground">No full answers</span>
-                      )}
-                      {guardrails.askWhatKnown && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-slate-800 text-foreground">Ask first</span>
-                      )}
-                      {guardrails.stayWithinSources && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-slate-800 text-foreground">Stay in sources</span>
-                      )}
-                      {guardrails.keepConcise && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-slate-800 text-foreground">Concise</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Scaffolding Preview */}
-                  <div className="p-3 rounded-lg bg-slate-900/30 border border-slate-800">
-                    <div className="text-xs text-muted-foreground mb-2">Scaffolding: {scaffoldingLevel}</div>
-                    <div className="space-y-1">
-                      {scaffoldingBehaviors.slice(0, 3).map((behavior, i) => (
-                        <div key={i} className="text-sm text-foreground">• {behavior}</div>
-                      ))}
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
 
             {/* Idea Cards */}
             <div className="pt-4 border-t border-slate-800">
@@ -783,12 +677,21 @@ export function CreateAgentModal({
           </Button>
           {step < 6 ? (
             <Button
-              onClick={() => setStep((step + 1) as Step)}
-              disabled={!canProceed()}
+              onClick={() => step === 1 ? handleNextFromStep1() : setStep((step + 1) as Step)}
+              disabled={!canProceed() || (step === 1 && isGenerating)}
               style={{ backgroundColor: canProceed() ? planetColor : undefined }}
             >
-              Next
-              <ChevronRight className="w-4 h-4 ml-1" />
+              {step === 1 && isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </>
+              )}
             </Button>
           ) : (
             <Button

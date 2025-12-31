@@ -6,7 +6,8 @@ import { Sidebar } from '@/components/navigation/Sidebar';
 import { UserStatus } from '@/components/galaxy/UserStatus';
 import { CreateAgentModal } from '@/components/planet/CreateAgentModal';
 import { AgentDetailsPanel } from '@/components/planet/AgentDetailsPanel';
-import { Agent, agentTemplates, mockPlanetSources, PlanetSource } from '@/components/planet/types';
+import { SourcesOverlay } from '@/components/planet/SourcesOverlay';
+import { Agent, agentTemplates } from '@/components/planet/types';
 import { toast } from 'sonner';
 
 interface OtherPlanet {
@@ -20,7 +21,7 @@ interface OtherPlanet {
 }
 
 const coreTools = [
-  { key: 'sources', icon: BookOpen, title: 'Sources', description: 'View notes & assignments.' },
+  { key: 'sources', icon: BookOpen, title: 'Sources', description: 'Context for this space.' },
   { key: 'workstation', icon: Monitor, title: 'Workstation', description: 'Open ASTAR.AI.' },
   { key: 'members', icon: Users, title: 'Members', description: "See who's on this planet." },
 ];
@@ -37,6 +38,8 @@ const PlanetLanding = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
+  const [sourcesOverlayOpen, setSourcesOverlayOpen] = useState(false);
+  const [sourceCount, setSourceCount] = useState(0);
 
   // Find the subject from data
   const decodedName = subjectName ? decodeURIComponent(subjectName) : searchParams.get('subject') || 'Linear Algebra';
@@ -48,9 +51,6 @@ const PlanetLanding = () => {
   };
 
   const planetId = subject.name.toLowerCase().replace(/\s/g, '-');
-
-  // Mock sources for this planet
-  const [sources] = useState<PlanetSource[]>(mockPlanetSources);
 
   // Get other planets for orbiting
   const otherPlanets: OtherPlanet[] = subjects
@@ -194,6 +194,8 @@ const PlanetLanding = () => {
   const handleToolClick = (tool: string) => {
     if (tool === 'workstation') {
       navigate(`/astar-ai?subject=${encodeURIComponent(subject.name)}`);
+    } else if (tool === 'sources') {
+      setSourcesOverlayOpen(true);
     } else {
       console.log(`${tool} clicked`);
     }
@@ -530,7 +532,7 @@ const PlanetLanding = () => {
         onCreateAgent={handleCreateAgent}
         planetId={planetId}
         planetColor={subject.color}
-        sources={sources}
+        sources={[]}
       />
 
       <AgentDetailsPanel
@@ -539,6 +541,14 @@ const PlanetLanding = () => {
         agent={selectedAgent}
         onStartSession={handleStartSession}
         planetColor={subject.color}
+      />
+
+      <SourcesOverlay
+        open={sourcesOverlayOpen}
+        onClose={() => setSourcesOverlayOpen(false)}
+        planetId={planetId}
+        planetColor={subject.color}
+        onSourceCountChange={setSourceCount}
       />
     </div>
   );

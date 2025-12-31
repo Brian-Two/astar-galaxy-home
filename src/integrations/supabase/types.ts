@@ -77,6 +77,48 @@ export type Database = {
         }
         Relationships: []
       }
+      sources: {
+        Row: {
+          content: string | null
+          created_at: string
+          file_path: string | null
+          id: string
+          is_deleted: boolean
+          planet_id: string
+          title: string
+          type: string
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          is_deleted?: boolean
+          planet_id: string
+          title: string
+          type: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          is_deleted?: boolean
+          planet_id?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

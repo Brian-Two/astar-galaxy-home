@@ -45,9 +45,6 @@ export function FileUpload({ planetId, onUploadComplete, onCancel, planetColor }
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       setFile(droppedFile);
-      if (!title) {
-        setTitle(droppedFile.name.replace(/\.[^/.]+$/, '')); // Remove extension for default title
-      }
     }
   }, [title]);
 
@@ -55,9 +52,6 @@ export function FileUpload({ planetId, onUploadComplete, onCancel, planetColor }
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
-      if (!title) {
-        setTitle(selectedFile.name.replace(/\.[^/.]+$/, ''));
-      }
     }
   };
 

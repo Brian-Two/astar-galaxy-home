@@ -84,10 +84,13 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
+          file_name: string | null
           file_path: string | null
           id: string
           is_deleted: boolean
+          mime_type: string | null
           planet_id: string
+          size_bytes: number | null
           title: string
           type: string
           updated_at: string
@@ -97,10 +100,13 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string
+          file_name?: string | null
           file_path?: string | null
           id?: string
           is_deleted?: boolean
+          mime_type?: string | null
           planet_id: string
+          size_bytes?: number | null
           title: string
           type: string
           updated_at?: string
@@ -110,10 +116,13 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string
+          file_name?: string | null
           file_path?: string | null
           id?: string
           is_deleted?: boolean
+          mime_type?: string | null
           planet_id?: string
+          size_bytes?: number | null
           title?: string
           type?: string
           updated_at?: string

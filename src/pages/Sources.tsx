@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { X, Plus, Link2, FileText, StickyNote, ExternalLink, Eye, Trash2, Home } from 'lucide-react';
+import { X, Plus, Link2, FileText, StickyNote, ExternalLink, Eye, Trash2, Home, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +14,7 @@ import { useAuthGate } from '@/hooks/useAuthGate';
 import { toast } from 'sonner';
 import { subjects } from '@/data/subjects';
 import { CollapsedSidebar } from '@/components/navigation/CollapsedSidebar';
+import { FileUpload } from '@/components/sources/FileUpload';
 
 export interface Source {
   id: string;
@@ -24,6 +25,9 @@ export interface Source {
   content?: string;
   url?: string;
   file_path?: string;
+  file_name?: string;
+  mime_type?: string;
+  size_bytes?: number;
   created_at: string;
 }
 
@@ -209,6 +213,50 @@ const Sources = () => {
     }
   };
 
+  const handleFileUploadComplete = async (fileData: {
+    title: string;
+    url: string;
+    file_name: string;
+    mime_type: string;
+    size_bytes: number;
+  }) => {
+    if (!user || !planetId) return;
+
+    try {
+      const sourceData = {
+        planet_id: planetId,
+        user_id: user.id,
+        title: fileData.title,
+        type: 'file' as const,
+        url: fileData.url,
+        file_name: fileData.file_name,
+        mime_type: fileData.mime_type,
+        size_bytes: fileData.size_bytes,
+      };
+
+      const { data, error } = await supabase
+        .from('sources')
+        .insert(sourceData)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const typedSource = {
+        ...data,
+        type: data.type as 'link' | 'file' | 'text'
+      };
+
+      setSources(prev => [typedSource, ...prev]);
+      setAddDialogOpen(false);
+      setNewSourceType('link');
+      toast.success('File uploaded!');
+    } catch (error) {
+      console.error('Error saving file source:', error);
+      toast.error('Failed to save file');
+    }
+  };
+
   const handleRemoveSource = async (sourceId: string) => {
     if (!requireAuth({ type: 'NAVIGATE_TO_SOURCES_PAGE', payload: { planetId } })) return;
     
@@ -230,6 +278,8 @@ const Sources = () => {
 
   const handleOpenSource = (source: Source) => {
     if (source.type === 'link' && source.url) {
+      window.open(source.url, '_blank');
+    } else if (source.type === 'file' && source.url) {
       window.open(source.url, '_blank');
     } else if (source.type === 'text') {
       setViewingSource(source);
@@ -438,6 +488,16 @@ const Sources = () => {
                               <ExternalLink className="w-4 h-4" />
                             </Button>
                           )}
+                          {source.type === 'file' && source.url && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenSource(source)}
+                              className="h-8 w-8"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          )}
                           {source.type === 'text' && (
                             <Button
                               variant="ghost"
@@ -493,11 +553,13 @@ const Sources = () => {
               </TabsList>
             </Tabs>
 
-            <Input
-              placeholder="Title"
-              value={newSourceTitle}
-              onChange={(e) => setNewSourceTitle(e.target.value)}
-            />
+            {newSourceType !== 'file' && (
+              <Input
+                placeholder="Title"
+                value={newSourceTitle}
+                onChange={(e) => setNewSourceTitle(e.target.value)}
+              />
+            )}
 
             {newSourceType === 'link' && (
               <Input
@@ -507,12 +569,12 @@ const Sources = () => {
               />
             )}
 
-            {newSourceType === 'file' && (
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                <p className="text-sm text-muted-foreground">
-                  File upload coming soon
-                </p>
-              </div>
+            {newSourceType === 'file' && planetId && (
+              <FileUpload
+                planetId={planetId}
+                onUploadComplete={handleFileUploadComplete}
+                planetColor={subject.color}
+              />
             )}
 
             {newSourceType === 'text' && (
@@ -524,14 +586,16 @@ const Sources = () => {
               />
             )}
 
-            <Button 
-              onClick={handleAddSource}
-              disabled={!newSourceTitle.trim() || submitting}
-              className="w-full"
-              style={{ backgroundColor: subject.color }}
-            >
-              {submitting ? 'Adding...' : 'Add Source'}
-            </Button>
+            {newSourceType !== 'file' && (
+              <Button 
+                onClick={handleAddSource}
+                disabled={!newSourceTitle.trim() || submitting}
+                className="w-full"
+                style={{ backgroundColor: subject.color }}
+              >
+                {submitting ? 'Adding...' : 'Add Source'}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

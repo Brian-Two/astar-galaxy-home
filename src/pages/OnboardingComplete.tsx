@@ -4,9 +4,10 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthBackground } from "@/components/auth/AuthBackground";
+import { getPostAuthPayload } from "@/hooks/useAuthGate";
 
 export default function OnboardingComplete() {
-  const { user, profile, loading, updateProfile } = useAuth();
+  const { user, profile, loading, updateProfile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [fillProgress, setFillProgress] = useState(0);
   const [showButtons, setShowButtons] = useState(false);
@@ -33,7 +34,30 @@ export default function OnboardingComplete() {
   const handleComplete = async (goToQuickplay: boolean) => {
     setIsCompleting(true);
     await updateProfile({ has_completed_onboarding: true, onboarding_step: 0 });
-    navigate(goToQuickplay ? '/' : '/');
+    
+    // Refresh profile to ensure state is updated
+    await refreshProfile();
+    
+    // Check for return-to-action payload
+    const postAuthPayload = getPostAuthPayload();
+    
+    if (postAuthPayload) {
+      // Navigate to the saved redirect path
+      navigate(postAuthPayload.redirectTo);
+      
+      // If there's an action to execute, we'll handle it via a custom event
+      if (postAuthPayload.action) {
+        // Dispatch a custom event that components can listen for
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('astar-post-auth-action', {
+            detail: postAuthPayload.action
+          }));
+        }, 500); // Small delay to ensure navigation completes
+      }
+    } else {
+      // Default navigation
+      navigate(goToQuickplay ? '/' : '/');
+    }
   };
 
   if (loading) return <AuthBackground><div className="flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></AuthBackground>;

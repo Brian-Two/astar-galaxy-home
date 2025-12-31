@@ -38,7 +38,7 @@ const Index = () => {
       <Sidebar />
       
       {/* User Status */}
-      <UserStatus name="Brian" points={1250} />
+      <UserStatus />
 
 
       {/* Center Star */}

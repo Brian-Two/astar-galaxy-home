@@ -19,6 +19,7 @@ interface Profile {
   goals: string[] | null;
   onboarding_step: number | null;
   has_completed_onboarding: boolean | null;
+  stars: number;
 }
 
 interface AuthContextType {

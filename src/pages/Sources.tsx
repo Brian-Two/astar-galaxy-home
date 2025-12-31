@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthGate } from '@/hooks/useAuthGate';
 import { toast } from 'sonner';
 import { subjects } from '@/data/subjects';
 import { CollapsedSidebar } from '@/components/navigation/CollapsedSidebar';
@@ -42,6 +43,7 @@ const Sources = () => {
   const { planetId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { requireAuth, isAuthenticated } = useAuthGate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   const [sources, setSources] = useState<Source[]>([]);
@@ -160,6 +162,7 @@ const Sources = () => {
   };
 
   const handleAddSource = async () => {
+    if (!requireAuth({ type: 'OPEN_ADD_SOURCE_MODAL', payload: { planetId, defaultTab: newSourceType } })) return;
     if (!user || !newSourceTitle.trim() || !planetId) return;
     
     setSubmitting(true);
@@ -207,6 +210,8 @@ const Sources = () => {
   };
 
   const handleRemoveSource = async (sourceId: string) => {
+    if (!requireAuth({ type: 'NAVIGATE_TO_SOURCES_PAGE', payload: { planetId } })) return;
+    
     try {
       const { error } = await supabase
         .from('sources')
@@ -357,7 +362,10 @@ const Sources = () => {
             </Tabs>
 
             <Button 
-              onClick={() => setAddDialogOpen(true)}
+              onClick={() => {
+                if (!requireAuth({ type: 'OPEN_ADD_SOURCE_MODAL', payload: { planetId, defaultTab: 'link' } })) return;
+                setAddDialogOpen(true);
+              }}
               style={{ backgroundColor: subject.color }}
               className="hover:opacity-90"
             >

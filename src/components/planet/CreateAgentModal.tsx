@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -637,41 +636,37 @@ export function CreateAgentModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-slate-950 border-slate-800 max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-0">
+      <DialogContent className="sm:max-w-lg bg-slate-950 border-slate-800 max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
           <DialogTitle className="text-foreground">Create new agent</DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 px-6">
-          <div className="py-4">
-            {/* Progress indicator */}
-            <div className="flex items-center gap-1 mb-4">
-              {stepTitles.map((title, i) => (
-                <div key={i} className="flex items-center">
-                  <div
-                    className={`h-1.5 rounded-full transition-all ${
-                      i + 1 <= step ? 'bg-emerald-500' : 'bg-slate-700'
-                    }`}
-                    style={{ 
-                      width: i === step - 1 ? '32px' : '16px',
-                      backgroundColor: i + 1 <= step ? planetColor : undefined,
-                    }}
-                  />
-                </div>
-              ))}
+        {/* Progress indicator */}
+        <div className="flex items-center gap-1 mb-4">
+          {stepTitles.map((title, i) => (
+            <div key={i} className="flex items-center">
+              <div
+                className={`h-1.5 rounded-full transition-all ${
+                  i + 1 <= step ? 'bg-emerald-500' : 'bg-slate-700'
+                }`}
+                style={{ 
+                  width: i === step - 1 ? '32px' : '16px',
+                  backgroundColor: i + 1 <= step ? planetColor : undefined,
+                }}
+              />
             </div>
-            
-            <div className="text-xs text-muted-foreground mb-2">
-              Step {step} of 6: {stepTitles[step - 1]}
-            </div>
+          ))}
+        </div>
+        
+        <div className="text-xs text-muted-foreground mb-2">
+          Step {step} of 6: {stepTitles[step - 1]}
+        </div>
 
-            <div className="min-h-[320px]">
-              {renderStep()}
-            </div>
-          </div>
-        </ScrollArea>
+        <div className="min-h-[320px]">
+          {renderStep()}
+        </div>
 
-        <div className="flex justify-between px-6 py-4 border-t border-slate-800">
+        <div className="flex justify-between pt-4 border-t border-slate-800">
           <Button
             variant="ghost"
             onClick={() => step > 1 ? setStep((step - 1) as Step) : handleClose()}

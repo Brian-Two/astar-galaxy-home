@@ -21,28 +21,21 @@ export const CollapsedSidebar = () => {
     <div className="fixed left-4 top-4 z-50">
       <div 
         className={cn(
-          "glass-panel flex flex-col overflow-hidden transition-all duration-300 ease-out",
-          isExpanded ? "py-2 px-[4px]" : "p-0"
+          "glass-panel flex flex-col overflow-hidden transition-all duration-300 ease-out px-[4px]",
+          isExpanded ? "py-2" : "py-1"
         )}
-        style={{
-          maxHeight: isExpanded ? '400px' : '56px',
-        }}
       >
         {/* Logo - always visible */}
         <button 
           onClick={() => setIsExpanded(!isExpanded)} 
-          className="flex items-center justify-center w-14 h-14 shrink-0 hover:bg-muted/50 rounded-lg transition-colors"
+          className="flex items-center justify-center w-12 h-12 shrink-0 hover:bg-muted/50 rounded-lg transition-colors"
         >
           <img src={astarLogo} alt="ASTAR" className="w-9 h-9 object-contain" />
         </button>
 
         {/* Menu Items - visible when expanded */}
-        <div 
-          className={cn(
-            "flex flex-col gap-1 transition-all duration-300",
-            isExpanded ? "opacity-100" : "opacity-0 pointer-events-none"
-          )}
-        >
+        {isExpanded && (
+          <div className="flex flex-col gap-1 animate-fade-in">
           {menuItems.map(item => {
             const isActive = location.pathname === item.path || 
               (item.path !== '/' && location.pathname.startsWith(item.path));
@@ -70,7 +63,8 @@ export const CollapsedSidebar = () => {
               </NavLink>
             );
           })}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

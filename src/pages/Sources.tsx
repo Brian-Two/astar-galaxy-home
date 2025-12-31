@@ -529,12 +529,12 @@ const Sources = () => {
 
       {/* Add Source Dialog */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-hidden">
           <DialogHeader>
             <DialogTitle>Add Source</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 pt-4">
+          <div className="space-y-4 pt-4 min-w-0">
             {/* Type selector */}
             <Tabs value={newSourceType} onValueChange={(v) => setNewSourceType(v as typeof newSourceType)}>
               <TabsList className="w-full">

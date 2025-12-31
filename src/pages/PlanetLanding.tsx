@@ -552,7 +552,6 @@ const PlanetLanding = () => {
         onCreateAgent={handleCreateAgent}
         planetId={planetId}
         planetColor={subject.color}
-        sources={[]}
       />
 
       <AgentDetailsPanel

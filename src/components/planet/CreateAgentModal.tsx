@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X, Plus, Trash2, ChevronRight, ChevronLeft, Check, Loader2, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Plus, Trash2, ChevronRight, ChevronLeft, Check, Loader2, RefreshCw, Link2, FileText, StickyNote, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Agent,
   AgentTemplate,
@@ -29,11 +30,11 @@ import {
   agentTemplates,
   agentTemplatesByCategory,
   categoryLabels,
-  PlanetSource,
   ideaCards,
   GeneratedAgentSetup,
 } from './types';
 import { supabase } from '@/integrations/supabase/client';
+import { usePlanetSources } from '@/hooks/usePlanetSources';
 
 interface CreateAgentModalProps {
   open: boolean;
@@ -41,7 +42,6 @@ interface CreateAgentModalProps {
   onCreateAgent: (agent: Omit<Agent, 'id' | 'timesUsed' | 'uniqueUsers' | 'createdAt'>) => void;
   planetId: string;
   planetColor: string;
-  sources: PlanetSource[];
 }
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
@@ -52,7 +52,6 @@ export function CreateAgentModal({
   onCreateAgent,
   planetId,
   planetColor,
-  sources,
 }: CreateAgentModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [selectedTemplate, setSelectedTemplate] = useState<AgentTemplate | null>(null);
@@ -76,6 +75,22 @@ export function CreateAgentModal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
   
+  // Add source form state
+  const [addSourceOpen, setAddSourceOpen] = useState(false);
+  const [newSourceType, setNewSourceType] = useState<'link' | 'file' | 'text'>('link');
+  const [newSourceTitle, setNewSourceTitle] = useState('');
+  const [newSourceContent, setNewSourceContent] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Use the planet sources hook with realtime enabled when on step 3
+  const { sources, loading: sourcesLoading, addSource } = usePlanetSources(
+    open && step === 3 ? planetId : undefined, 
+    { enableRealtime: true }
+  );
+
+  // Also fetch sources when modal opens (for other steps that might need it)
+  const { sources: allSources } = usePlanetSources(open ? planetId : undefined);
+  
 
   const resetForm = () => {
     setStep(1);
@@ -97,7 +112,32 @@ export function CreateAgentModal({
     setScaffoldingBehaviors([]);
     setIsGenerating(false);
     setHasGenerated(false);
+    setAddSourceOpen(false);
+    setNewSourceType('link');
+    setNewSourceTitle('');
+    setNewSourceContent('');
+    setSubmitting(false);
+  };
+
+  const handleAddSourceSubmit = async () => {
+    if (!newSourceTitle.trim()) return;
     
+    setSubmitting(true);
+    const result = await addSource(newSourceType, newSourceTitle, newSourceContent);
+    setSubmitting(false);
+    
+    if (result) {
+      setNewSourceTitle('');
+      setNewSourceContent('');
+      setNewSourceType('link');
+      setAddSourceOpen(false);
+    }
+  };
+
+  const typeIcons = {
+    link: Link2,
+    file: FileText,
+    text: StickyNote,
   };
 
   const handleClose = () => {
@@ -112,7 +152,8 @@ export function CreateAgentModal({
       case 2:
         return objectives.some(o => o.text.trim());
       case 3:
-        return useAllSources || selectedSourceIds.length > 0;
+        // Allow proceeding if: using all sources, has selected sources, or there are no sources
+        return useAllSources || selectedSourceIds.length > 0 || sources.length === 0;
       case 4:
       case 5:
         return true;
@@ -410,13 +451,25 @@ export function CreateAgentModal({
       case 3:
         return (
           <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-medium text-foreground mb-2">Select sources</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Agents use the sources attached to this planet as context for helping you learn.
-              </p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-foreground mb-2">Select sources</h3>
+                <p className="text-sm text-muted-foreground">
+                  Agents use the sources attached to this planet as context for helping you learn.
+                </p>
+              </div>
+              <a 
+                href={`/planets/${encodeURIComponent(planetId)}/sources`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0"
+              >
+                Manage sources <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
-            <div className="flex items-center gap-2 mb-4">
+
+            {/* Use all sources toggle */}
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-900/50 border border-slate-700">
               <Checkbox
                 id="use-all"
                 checked={useAllSources}
@@ -425,36 +478,148 @@ export function CreateAgentModal({
                   if (checked) setSelectedSourceIds([]);
                 }}
               />
-              <label htmlFor="use-all" className="text-sm text-foreground cursor-pointer">
+              <label htmlFor="use-all" className="text-sm text-foreground cursor-pointer flex-1">
                 Use all sources on this planet
               </label>
             </div>
-            {!useAllSources && (
-              <div className="space-y-2">
-                {sources.map(source => (
-                  <button
-                    key={source.id}
-                    onClick={() => toggleSourceSelection(source.id)}
-                    className={`w-full p-3 rounded-lg border text-left transition-all flex items-center gap-3 ${
-                      selectedSourceIds.includes(source.id)
-                        ? 'border-2 bg-slate-800/50'
-                        : 'border-slate-700 hover:border-slate-600 bg-slate-900/50'
-                    }`}
-                    style={{
-                      borderColor: selectedSourceIds.includes(source.id) ? planetColor : undefined,
-                    }}
+
+            {/* Helper text */}
+            <p className="text-xs text-muted-foreground italic">
+              {useAllSources 
+                ? "This agent will use everything attached to this planet."
+                : "This agent will only use the sources you choose."}
+            </p>
+
+            {/* Source list or empty state */}
+            {sourcesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : sources.length === 0 ? (
+              <div className="text-center py-8 bg-slate-900/30 rounded-lg border border-slate-800">
+                <p className="text-muted-foreground text-sm mb-3">No sources on this planet yet</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setAddSourceOpen(true)}
+                >
+                  <Plus className="w-4 h-4 mr-1" /> Add source
+                </Button>
+              </div>
+            ) : (
+              <>
+                {!useAllSources && (
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                    {sources.map(source => {
+                      const IconComponent = typeIcons[source.type];
+                      return (
+                        <button
+                          key={source.id}
+                          onClick={() => toggleSourceSelection(source.id)}
+                          className={`w-full p-3 rounded-lg border text-left transition-all flex items-center gap-3 ${
+                            selectedSourceIds.includes(source.id)
+                              ? 'border-2 bg-slate-800/50'
+                              : 'border-slate-700 hover:border-slate-600 bg-slate-900/50'
+                          }`}
+                          style={{
+                            borderColor: selectedSourceIds.includes(source.id) ? planetColor : undefined,
+                          }}
+                        >
+                          <div className={`w-5 h-5 rounded border flex items-center justify-center ${
+                            selectedSourceIds.includes(source.id) ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'
+                          }`}>
+                            {selectedSourceIds.includes(source.id) && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                          <IconComponent className="w-4 h-4 text-muted-foreground" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-foreground text-sm truncate">{source.title}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Add source button */}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setAddSourceOpen(true)}
+                  className="mt-2"
+                >
+                  <Plus className="w-4 h-4 mr-1" /> Add source
+                </Button>
+              </>
+            )}
+
+            {/* Add source dialog */}
+            {addSourceOpen && (
+              <div className="p-4 rounded-lg border border-slate-700 bg-slate-900/70 space-y-3 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-foreground">Add new source</h4>
+                  <Button variant="ghost" size="icon" onClick={() => setAddSourceOpen(false)} className="h-6 w-6">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                <Tabs value={newSourceType} onValueChange={(v) => setNewSourceType(v as 'link' | 'file' | 'text')}>
+                  <TabsList className="bg-slate-800/50 h-8">
+                    <TabsTrigger value="link" className="text-xs h-7 px-3">
+                      <Link2 className="w-3 h-3 mr-1" /> Link
+                    </TabsTrigger>
+                    <TabsTrigger value="file" className="text-xs h-7 px-3">
+                      <FileText className="w-3 h-3 mr-1" /> File
+                    </TabsTrigger>
+                    <TabsTrigger value="text" className="text-xs h-7 px-3">
+                      <StickyNote className="w-3 h-3 mr-1" /> Note
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
+                <Input
+                  placeholder="Title"
+                  value={newSourceTitle}
+                  onChange={(e) => setNewSourceTitle(e.target.value)}
+                  className="bg-slate-900/50 border-slate-700 h-8 text-sm"
+                />
+
+                {newSourceType === 'link' && (
+                  <Input
+                    placeholder="https://..."
+                    value={newSourceContent}
+                    onChange={(e) => setNewSourceContent(e.target.value)}
+                    className="bg-slate-900/50 border-slate-700 h-8 text-sm"
+                  />
+                )}
+
+                {newSourceType === 'text' && (
+                  <Textarea
+                    placeholder="Enter your notes..."
+                    value={newSourceContent}
+                    onChange={(e) => setNewSourceContent(e.target.value)}
+                    className="bg-slate-900/50 border-slate-700 min-h-[80px] text-sm"
+                  />
+                )}
+
+                {newSourceType === 'file' && (
+                  <p className="text-xs text-muted-foreground">
+                    File upload coming soon. Use the Sources page for file uploads.
+                  </p>
+                )}
+
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setAddSourceOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={handleAddSourceSubmit}
+                    disabled={!newSourceTitle.trim() || submitting}
+                    style={{ backgroundColor: planetColor }}
                   >
-                    <div className={`w-5 h-5 rounded border flex items-center justify-center ${
-                      selectedSourceIds.includes(source.id) ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'
-                    }`}>
-                      {selectedSourceIds.includes(source.id) && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground text-sm">{source.title}</div>
-                      <div className="text-xs text-muted-foreground">{source.type}</div>
-                    </div>
-                  </button>
-                ))}
+                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+                  </Button>
+                </div>
               </div>
             )}
           </div>

@@ -15,7 +15,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (loading) return;
 
     if (!user) {
-      navigate('/auth', { replace: true });
+      navigate('/onboarding', { replace: true });
       return;
     }
 

@@ -13,17 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-interface UserStatusProps {
-  name: string;
-  points: number;
-  email?: string;
-}
-
-export const UserStatus = ({ name, points, email = 'user@example.com' }: UserStatusProps) => {
-  const { signOut } = useAuth();
+export const UserStatus = () => {
+  const { user, profile, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -32,7 +27,6 @@ export const UserStatus = ({ name, points, email = 'user@example.com' }: UserSta
     setIsLoggingOut(true);
     try {
       await signOut();
-      // Clear any local storage items
       localStorage.removeItem('astar_onboarding_complete_animation_seen');
       navigate('/auth', { replace: true });
     } catch (error) {
@@ -41,28 +35,60 @@ export const UserStatus = ({ name, points, email = 'user@example.com' }: UserSta
         title: "Logout failed",
         description: "There was an issue signing out. Redirecting to login...",
       });
-      // Still redirect even if signOut fails
       navigate('/auth', { replace: true });
     } finally {
       setIsLoggingOut(false);
     }
   };
 
+  const handleSignIn = () => {
+    navigate('/onboarding');
+  };
+
+  // Show loading state briefly
+  if (loading) {
+    return (
+      <div className="fixed top-6 right-6 z-40">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Signed OUT state - show Sign in button
+  if (!user) {
+    return (
+      <div className="fixed top-6 right-6 z-40">
+        <Button 
+          onClick={handleSignIn}
+          variant="default"
+          className="font-display"
+        >
+          Sign in
+        </Button>
+      </div>
+    );
+  }
+
+  // Signed IN state - show stars + avatar
+  const displayName = profile?.username || user.email?.split('@')[0] || 'User';
+  const stars = profile?.stars ?? 50;
+  const email = user.email || '';
+
   return (
     <div className="fixed top-6 right-6 z-40 flex items-center gap-3">
-      {/* Points Box with Tooltip */}
+      {/* Stars Box with Tooltip */}
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="glass-panel px-4 py-2 flex items-center gap-2 cursor-pointer">
             <Star className="w-4 h-4 text-white fill-white" />
             <span className="font-display font-bold text-foreground">
-              {points.toLocaleString()}
+              {stars.toLocaleString()}
             </span>
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-[200px]">
           <p className="text-sm">
-            Earn points by completing assignments, study sessions, and projects.
+            Earn stars by completing assignments, study sessions, and projects.
           </p>
         </TooltipContent>
       </Tooltip>
@@ -72,13 +98,13 @@ export const UserStatus = ({ name, points, email = 'user@example.com' }: UserSta
         <DropdownMenuTrigger asChild>
           <button className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50">
             <span className="text-sm font-bold text-primary-foreground">
-              {name.charAt(0).toUpperCase()}
+              {displayName.charAt(0).toUpperCase()}
             </span>
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 bg-card border-border">
           <div className="px-3 py-3">
-            <p className="font-semibold text-foreground">{name}</p>
+            <p className="font-semibold text-foreground">{displayName}</p>
             <p className="text-sm text-muted-foreground">{email}</p>
           </div>
           <DropdownMenuSeparator />

@@ -393,7 +393,7 @@ const PlanetLanding = () => {
 
         {/* User status - top right */}
         <div className="absolute top-0 right-0 z-30">
-          <UserStatus name="Explorer" points={1240} />
+          <UserStatus />
         </div>
 
         {/* Centered up arrow - top center */}

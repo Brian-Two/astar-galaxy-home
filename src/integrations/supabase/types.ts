@@ -32,6 +32,7 @@ export type Database = {
           onboarding_step: number | null
           school: string | null
           school_is_custom: boolean | null
+          stars: number
           updated_at: string
           username: string | null
         }
@@ -52,6 +53,7 @@ export type Database = {
           onboarding_step?: number | null
           school?: string | null
           school_is_custom?: boolean | null
+          stars?: number
           updated_at?: string
           username?: string | null
         }
@@ -72,6 +74,7 @@ export type Database = {
           onboarding_step?: number | null
           school?: string | null
           school_is_custom?: boolean | null
+          stars?: number
           updated_at?: string
           username?: string | null
         }

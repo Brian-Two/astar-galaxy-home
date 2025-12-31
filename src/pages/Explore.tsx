@@ -104,7 +104,7 @@ const Explore = () => {
     <div className="relative min-h-screen overflow-hidden">
       <GalaxyBackground />
       <Sidebar />
-      <UserStatus name="Brian" points={1250} />
+      <UserStatus />
 
       <div className="relative z-10 min-h-screen pl-24 pr-8 py-6">
         {/* Header */}

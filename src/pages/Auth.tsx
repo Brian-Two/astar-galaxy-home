@@ -33,6 +33,9 @@ export default function Auth() {
       } else {
         navigate('/onboarding');
       }
+    } else if (!loading && !user) {
+      // Redirect to onboarding which now handles auth
+      navigate('/onboarding');
     }
   }, [user, profile, loading, navigate]);
 

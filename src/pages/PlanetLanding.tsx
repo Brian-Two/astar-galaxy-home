@@ -6,8 +6,9 @@ import { Sidebar } from '@/components/navigation/Sidebar';
 import { UserStatus } from '@/components/galaxy/UserStatus';
 import { CreateAgentModal } from '@/components/planet/CreateAgentModal';
 import { AgentDetailsPanel } from '@/components/planet/AgentDetailsPanel';
-import { SourcesOverlay } from '@/components/planet/SourcesOverlay';
 import { Agent, agentTemplates } from '@/components/planet/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 interface OtherPlanet {
@@ -38,8 +39,8 @@ const PlanetLanding = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
-  const [sourcesOverlayOpen, setSourcesOverlayOpen] = useState(false);
   const [sourceCount, setSourceCount] = useState(0);
+  const { user } = useAuth();
 
   // Find the subject from data
   const decodedName = subjectName ? decodeURIComponent(subjectName) : searchParams.get('subject') || 'Linear Algebra';
@@ -70,6 +71,25 @@ const PlanetLanding = () => {
   useEffect(() => {
     setOrbitAngles(otherPlanets.map(p => p.startAngle));
   }, []);
+
+  // Fetch source count for planet
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchSourceCount = async () => {
+      const { count, error } = await supabase
+        .from('sources')
+        .select('*', { count: 'exact', head: true })
+        .eq('planet_id', planetId)
+        .eq('is_deleted', false);
+      
+      if (!error && count !== null) {
+        setSourceCount(count);
+      }
+    };
+    
+    fetchSourceCount();
+  }, [user, planetId]);
 
   // Animate orbiting planets
   useEffect(() => {
@@ -195,7 +215,7 @@ const PlanetLanding = () => {
     if (tool === 'workstation') {
       navigate(`/astar-ai?subject=${encodeURIComponent(subject.name)}`);
     } else if (tool === 'sources') {
-      setSourcesOverlayOpen(true);
+      navigate(`/planets/${planetId}/sources`);
     } else {
       console.log(`${tool} clicked`);
     }
@@ -541,14 +561,6 @@ const PlanetLanding = () => {
         agent={selectedAgent}
         onStartSession={handleStartSession}
         planetColor={subject.color}
-      />
-
-      <SourcesOverlay
-        open={sourcesOverlayOpen}
-        onClose={() => setSourcesOverlayOpen(false)}
-        planetId={planetId}
-        planetColor={subject.color}
-        onSourceCountChange={setSourceCount}
       />
     </div>
   );

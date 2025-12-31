@@ -13,6 +13,7 @@ import Board from "./pages/Board";
 import Stats from "./pages/Stats";
 import Friends from "./pages/Friends";
 import PlanetLanding from "./pages/PlanetLanding";
+import Sources from "./pages/Sources";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import OnboardingComplete from "./pages/OnboardingComplete";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/stats" element={<ProtectedRoute><Stats /></ProtectedRoute>} />
             <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
             <Route path="/planet/:subjectName" element={<ProtectedRoute><PlanetLanding /></ProtectedRoute>} />
+            <Route path="/planets/:planetId/sources" element={<ProtectedRoute><Sources /></ProtectedRoute>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

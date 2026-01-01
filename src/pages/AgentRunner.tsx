@@ -111,7 +111,7 @@ const AgentRunner = () => {
   const [isExiting, setIsExiting] = useState(false);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [activeObjectiveIndex, setActiveObjectiveIndex] = useState<number | null>(null);
+  const [activeObjectiveIndex, setActiveObjectiveIndex] = useState<number>(0);
   const [showStarFlood, setShowStarFlood] = useState(false);
 
   // Get planet info
@@ -324,9 +324,7 @@ const AgentRunner = () => {
       scaffolding_level: agent.scaffoldingLevel,
       scaffolding_behaviors: agent.scaffoldingBehaviors,
       source_mode: agent.useAllSources ? 'all' : 'selected',
-      active_objective_text: activeObjectiveIndex !== null
-        ? agent.learningObjectives[activeObjectiveIndex]?.text
-        : undefined,
+      active_objective_text: agent.learningObjectives[activeObjectiveIndex]?.text,
     };
 
     // Prepare messages for API (exclude system messages, include history)
@@ -445,10 +443,8 @@ const AgentRunner = () => {
   }
 
   const visibleObjectives = agent.learningObjectives.filter(o => o.showToOthers);
-  // Display text: if an objective is selected, show it; otherwise show first objective but don't mark active
-  const displayedObjectiveText = activeObjectiveIndex !== null 
-    ? visibleObjectives[activeObjectiveIndex]?.text 
-    : visibleObjectives[0]?.text || '';
+  // Display text based on selected index
+  const displayedObjectiveText = visibleObjectives[activeObjectiveIndex]?.text || visibleObjectives[0]?.text || '';
 
   return (
     <div className="min-h-screen flex w-full bg-background overflow-hidden relative">
@@ -567,7 +563,7 @@ const AgentRunner = () => {
                     return (
                       <button
                         key={obj.id}
-                        onClick={() => setActiveObjectiveIndex(isActive ? null : idx)}
+                        onClick={() => setActiveObjectiveIndex(idx)}
                         className="relative p-1.5 rounded-full transition-all"
                         style={{
                           boxShadow: isActive 

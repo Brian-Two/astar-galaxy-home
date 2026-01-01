@@ -174,29 +174,24 @@ const AgentRunner = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let stars: { x: number; y: number; size: number; opacity: number; twinkleSpeed: number }[] = [];
-
-    const initStars = () => {
-      stars = [];
-      for (let i = 0; i < 100; i++) {
-        stars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          size: Math.random() * 1.5 + 0.5,
-          opacity: Math.random() * 0.5 + 0.3,
-          twinkleSpeed: Math.random() * 0.02 + 0.01,
-        });
-      }
-    };
-
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = 160;
-      initStars();
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
+
+    const stars: { x: number; y: number; size: number; opacity: number; twinkleSpeed: number }[] = [];
+    for (let i = 0; i < 100; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 1.5 + 0.5,
+        opacity: Math.random() * 0.5 + 0.3,
+        twinkleSpeed: Math.random() * 0.02 + 0.01,
+      });
+    }
 
     let animationId: number;
     let time = 0;

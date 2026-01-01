@@ -8,10 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePlanets } from '@/hooks/usePlanets';
 import { useAgentConversation, Message } from '@/hooks/useAgentConversation';
 import { useObjectiveProgress } from '@/hooks/useObjectiveProgress';
-import { usePlanetSources } from '@/hooks/usePlanetSources';
 import { CollapsedSidebar } from '@/components/navigation/CollapsedSidebar';
 import { StarFloodAnimation } from '@/components/astar/StarFloodAnimation';
-import { SourcesPopup } from '@/components/astar/SourcesPopup';
 import { toast } from 'sonner';
 import { Agent, LearningObjective, AgentGuardrails } from '@/components/planet/types';
 import astarLogo from '@/assets/astar-logo-new.png';
@@ -115,16 +113,12 @@ const AgentRunner = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [activeObjectiveIndex, setActiveObjectiveIndex] = useState<number | null>(null);
   const [showStarFlood, setShowStarFlood] = useState(false);
-  const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
 
   // Get planet info
   const { planets } = usePlanets();
   const planet = planets.find(p => p.id === planetId);
   const planetColor = planet?.color || '#5A67D8';
   const planetName = planet?.name || 'Planet';
-
-  // Sources hook
-  const { sources, addSource } = usePlanetSources(planetId);
 
   // Conversation and progress hooks
   const {
@@ -163,7 +157,6 @@ const AgentRunner = () => {
 
         const mappedAgent = mapDbAgentToAgent(data as DbAgent);
         setAgent(mappedAgent);
-        setSelectedSourceIds(mappedAgent.selectedSourceIds);
       } catch (error) {
         console.error('Error fetching agent:', error);
         toast.error('Failed to load agent');
@@ -431,18 +424,6 @@ const AgentRunner = () => {
     }
   };
 
-  const handleToggleSource = (sourceId: string) => {
-    setSelectedSourceIds(prev => 
-      prev.includes(sourceId)
-        ? prev.filter(id => id !== sourceId)
-        : [...prev, sourceId]
-    );
-  };
-
-  const handleAddSource = async (type: 'link' | 'text', title: string, content?: string) => {
-    await addSource(type, title, content);
-  };
-
   const quickActions = agent ? (quickActionsByType[agent.template] || ['Help me learn', 'Explain this', 'Quiz me']) : [];
 
   const loading = agentLoading || conversationLoading;
@@ -587,24 +568,21 @@ const AgentRunner = () => {
                       <button
                         key={obj.id}
                         onClick={() => setActiveObjectiveIndex(isActive ? null : idx)}
-                        className="relative w-7 h-7 flex items-center justify-center rounded-full transition-all"
+                        className="relative p-1.5 rounded-full transition-all"
                         style={{
                           boxShadow: isActive 
                             ? `0 0 0 2px ${planetColor}` 
                             : 'none',
-                          backgroundColor: isActive ? `${planetColor}20` : 'transparent',
                         }}
                         title={obj.text}
                       >
-                        <span className={`text-sm font-medium transition-all ${
-                          isHit 
-                            ? 'text-white' 
-                            : isActive 
-                              ? 'text-foreground' 
-                              : 'text-muted-foreground'
-                        }`}>
-                          {idx + 1}
-                        </span>
+                        <Star
+                          className={`w-5 h-5 transition-all ${
+                            isHit || isActive
+                              ? 'fill-white text-white'
+                              : 'text-slate-500'
+                          } ${isHit ? 'drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]' : ''}`}
+                        />
                         {/* Subtle sparkle for completed */}
                         {isHit && (
                           <Sparkles 
@@ -620,7 +598,7 @@ const AgentRunner = () => {
                 {/* Divider */}
                 <div className="w-px h-5 bg-border/50" />
                 
-                {/* Objective text */}
+                {/* Current objective text */}
                 <span className="text-sm text-muted-foreground truncate flex-1">
                   {displayedObjectiveText}
                 </span>
@@ -700,15 +678,6 @@ const AgentRunner = () => {
               <div 
                 className="relative flex items-end gap-2 rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 transition-colors focus-within:border-slate-600"
               >
-                {/* Sources popup button */}
-                <SourcesPopup
-                  sources={sources}
-                  selectedSourceIds={selectedSourceIds}
-                  onToggleSource={handleToggleSource}
-                  onAddSource={handleAddSource}
-                  useAllSources={agent.useAllSources}
-                  planetColor={planetColor}
-                />
 
                 {/* Textarea - expands upward, no scrollbar */}
                 <textarea

@@ -1,10 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { X, Star, Send, Loader2, Check, FolderOpen, Sparkles } from 'lucide-react';
+import { X, Star, Send, Loader2, FolderOpen, Sparkles, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { usePlanets } from '@/hooks/usePlanets';
@@ -105,6 +103,7 @@ const AgentRunner = () => {
   const { user } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [agent, setAgent] = useState<Agent | null>(null);
   const [agentLoading, setAgentLoading] = useState(true);
@@ -224,12 +223,68 @@ const AgentRunner = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Auto-resize textarea
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const maxHeight = 120; // ~4 lines
+      textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
+    }
+  }, []);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [input, adjustTextareaHeight]);
+
   const handleClose = () => {
     setIsExiting(true);
     setTimeout(() => {
       navigate(`/planet/${encodeURIComponent(planetName)}`);
     }, 250);
   };
+
+  // Check for objective completion after assistant response
+  const checkObjectiveCompletion = useCallback(async (
+    allMessages: Message[],
+    objectives: LearningObjective[]
+  ) => {
+    if (!agent || objectives.length === 0) return;
+
+    // Get last 20 messages for evaluation
+    const recentMessages = allMessages.slice(-20);
+    if (recentMessages.length < 2) return;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/evaluate-objectives`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          objectives: objectives.map((o, i) => ({ index: i, text: o.text })),
+          messages: recentMessages.map(m => ({ role: m.role, content: m.content })),
+        }),
+      });
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const hitIndexes: number[] = data.hit || [];
+
+      for (const idx of hitIndexes) {
+        if (!isObjectiveHit(idx)) {
+          const success = await markObjectiveHit(idx);
+          if (success) {
+            toast.success(`Objective completed: "${objectives[idx]?.text.substring(0, 50)}..."`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking objectives:', error);
+    }
+  }, [agent, isObjectiveHit, markObjectiveHit]);
 
   const handleSendMessage = async (text?: string) => {
     const messageText = text || input.trim();
@@ -326,6 +381,15 @@ const AgentRunner = () => {
       // Save the final assistant message to DB
       if (assistantContent) {
         await addAssistantMessage(assistantContent);
+
+        // Check for objective completion after response
+        const visibleObjectives = agent.learningObjectives.filter(o => o.showToOthers);
+        const updatedMessages = [
+          ...messages,
+          { id: 'temp-user', role: 'user' as const, content: messageText, conversation_id: '', created_at: new Date().toISOString() },
+          { id: 'temp-assistant', role: 'assistant' as const, content: assistantContent, conversation_id: '', created_at: new Date().toISOString() },
+        ] as Message[];
+        checkObjectiveCompletion(updatedMessages, visibleObjectives);
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -339,17 +403,6 @@ const AgentRunner = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
-    }
-  };
-
-  const handleMarkObjectiveHit = async () => {
-    if (activeObjectiveIndex === null) return;
-
-    const success = await markObjectiveHit(activeObjectiveIndex);
-    if (success) {
-      toast.success('Objective marked as complete!');
-    } else {
-      toast.error('Failed to mark objective');
     }
   };
 
@@ -374,6 +427,10 @@ const AgentRunner = () => {
   }
 
   const visibleObjectives = agent.learningObjectives.filter(o => o.showToOthers);
+  // Display text: if an objective is selected, show it; otherwise show first objective but don't mark active
+  const displayedObjectiveText = activeObjectiveIndex !== null 
+    ? visibleObjectives[activeObjectiveIndex]?.text 
+    : visibleObjectives[0]?.text || '';
 
   return (
     <div className="min-h-screen flex w-full bg-background overflow-hidden relative">
@@ -400,12 +457,18 @@ const AgentRunner = () => {
 
         {/* Starry header */}
         <div className="relative h-40 shrink-0 overflow-hidden">
+          {/* Starfield background */}
+          <div 
+            className="absolute inset-0" 
+            style={{ 
+              background: 'linear-gradient(180deg, hsl(230, 35%, 4%) 0%, hsl(230, 35%, 8%) 100%)',
+              zIndex: 0
+            }}
+          />
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full"
-            style={{
-              background: 'linear-gradient(180deg, hsl(230, 35%, 4%) 0%, hsl(230, 35%, 8%) 100%)',
-            }}
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ zIndex: 1 }}
           />
 
           {/* Logo */}
@@ -432,7 +495,7 @@ const AgentRunner = () => {
             height="56"
             viewBox="0 0 1440 56"
             preserveAspectRatio="none"
-            style={{ transform: 'translateY(1px)' }}
+            style={{ transform: 'translateY(1px)', zIndex: 2 }}
           >
             <path
               d="M0,56 L0,28 Q720,0 1440,28 L1440,56 Z"
@@ -456,12 +519,12 @@ const AgentRunner = () => {
             background: `linear-gradient(180deg, ${planetColor}15 0%, ${planetColor}08 50%, hsl(230, 35%, 7%) 100%)`,
           }}
         >
-          {/* Learning objectives header */}
+          {/* Learning objectives header - Brisk style */}
           {visibleObjectives.length > 0 && (
             <div className="px-6 py-4 border-b border-border/30">
-              <div className="flex items-center gap-4 flex-wrap">
-                <span className="text-sm text-muted-foreground">Objectives:</span>
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
+                {/* Star icons */}
+                <div className="flex items-center gap-1.5">
                   {visibleObjectives.map((obj, idx) => {
                     const isHit = isObjectiveHit(idx);
                     const isActive = activeObjectiveIndex === idx;
@@ -469,47 +532,34 @@ const AgentRunner = () => {
                       <button
                         key={obj.id}
                         onClick={() => setActiveObjectiveIndex(isActive ? null : idx)}
-                        className={`p-2 rounded-lg transition-all ${
-                          isActive
-                            ? 'bg-yellow-500/20 ring-2 ring-yellow-500'
-                            : 'hover:bg-slate-800/50'
-                        }`}
+                        className="relative p-1.5 rounded-full transition-all"
+                        style={{
+                          boxShadow: isActive 
+                            ? `0 0 0 2px ${planetColor}60` 
+                            : 'none',
+                        }}
                         title={obj.text}
                       >
                         <Star
-                          className={`w-5 h-5 ${
-                            isHit
-                              ? 'fill-yellow-400 text-yellow-400'
+                          className={`w-5 h-5 transition-all ${
+                            isHit || isActive
+                              ? 'fill-white text-white'
                               : 'text-slate-500'
-                          }`}
+                          } ${isHit ? 'drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]' : ''}`}
                         />
+                        {/* Subtle sparkle for completed */}
+                        {isHit && (
+                          <Sparkles className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 text-white/70" />
+                        )}
                       </button>
                     );
                   })}
                 </div>
-                {activeObjectiveIndex !== null && visibleObjectives[activeObjectiveIndex] && (
-                  <div className="flex items-center gap-3 flex-1">
-                    <Badge variant="outline" className="bg-yellow-500/10 border-yellow-500/30 text-yellow-200">
-                      {visibleObjectives[activeObjectiveIndex].text}
-                    </Badge>
-                    {!isObjectiveHit(activeObjectiveIndex) && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={handleMarkObjectiveHit}
-                        className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        Mark as hit
-                      </Button>
-                    )}
-                  </div>
-                )}
-                {activeObjectiveIndex === null && (
-                  <span className="text-sm text-muted-foreground italic">
-                    Select an objective to focus (optional)
-                  </span>
-                )}
+                
+                {/* Objective text */}
+                <span className="text-sm text-muted-foreground truncate flex-1">
+                  {displayedObjectiveText}
+                </span>
               </div>
             </div>
           )}
@@ -580,38 +630,51 @@ const AgentRunner = () => {
             </div>
           )}
 
-          {/* Input area */}
-          <div className="p-6 border-t border-border/30">
-            <div className="max-w-3xl mx-auto flex gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => navigate(`/planets/${planetId}/sources`)}
-                className="shrink-0 bg-slate-800/50 border-slate-700 hover:bg-slate-700"
-                title="View sources"
+          {/* ChatGPT-style input area */}
+          <div className="p-4 pb-6">
+            <div className="max-w-3xl mx-auto">
+              <div 
+                className="relative flex items-end gap-2 rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 transition-colors focus-within:border-slate-600"
               >
-                <FolderOpen className="w-5 h-5" />
-              </Button>
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={`Message ${agent.name}...`}
-                className="min-h-[44px] max-h-32 resize-none bg-slate-900/50 border-slate-700"
-                disabled={isStreaming}
-              />
-              <Button
-                onClick={() => handleSendMessage()}
-                disabled={!input.trim() || isStreaming}
-                style={{ backgroundColor: planetColor }}
-                className="shrink-0 hover:opacity-90"
-              >
-                {isStreaming ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Send className="w-5 h-5" />
-                )}
-              </Button>
+                {/* Sources button */}
+                <button
+                  onClick={() => navigate(`/planets/${planetId}/sources`)}
+                  className="shrink-0 p-2 -ml-2 rounded-lg text-slate-400 hover:text-slate-300 hover:bg-slate-800/50 transition-colors"
+                  title="View sources"
+                >
+                  <FolderOpen className="w-5 h-5" />
+                </button>
+
+                {/* Textarea */}
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={`Message ${agent.name}...`}
+                  className="flex-1 bg-transparent border-0 text-foreground placeholder:text-slate-500 resize-none focus:outline-none focus:ring-0 min-h-[24px] max-h-[120px] py-0.5"
+                  style={{ height: '24px' }}
+                  disabled={isStreaming}
+                  rows={1}
+                />
+
+                {/* Send button */}
+                <button
+                  onClick={() => handleSendMessage()}
+                  disabled={!input.trim() || isStreaming}
+                  className="shrink-0 p-2 -mr-2 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ 
+                    backgroundColor: input.trim() && !isStreaming ? planetColor : 'transparent',
+                    color: input.trim() && !isStreaming ? 'white' : 'currentColor'
+                  }}
+                >
+                  {isStreaming ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                  ) : (
+                    <ArrowUp className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

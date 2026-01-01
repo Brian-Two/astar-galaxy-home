@@ -577,8 +577,8 @@ export function CreateAgentModal({
       case 3:
         return (
           <div className="space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
+            <div className="flex items-start justify-between gap-3 min-w-0">
+              <div className="min-w-0">
                 <h3 className="text-lg font-medium text-foreground mb-2">Select sources</h3>
                 <p className="text-sm text-muted-foreground">
                   Agents use the sources attached to this planet as context for helping you learn.
@@ -642,7 +642,7 @@ export function CreateAgentModal({
                         <button
                           key={source.id}
                           onClick={() => toggleSourceSelection(source.id)}
-                          className={`w-full p-3 rounded-lg border text-left transition-all flex items-center gap-3 overflow-hidden ${
+                          className={`w-full max-w-full min-w-0 p-3 rounded-lg border text-left transition-all flex items-center gap-3 overflow-hidden ${
                             selectedSourceIds.includes(source.id)
                               ? 'border-2 bg-slate-800/50'
                               : 'border-slate-700 hover:border-slate-600 bg-slate-900/50'
@@ -980,7 +980,7 @@ export function CreateAgentModal({
   return (
   <>
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-slate-950 border-slate-800 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg bg-slate-950 border-slate-800 max-h-[90vh] overflow-y-auto overflow-x-hidden min-w-0">
         <DialogHeader>
           <DialogTitle className="text-foreground">Create new agent</DialogTitle>
         </DialogHeader>
@@ -1006,7 +1006,7 @@ export function CreateAgentModal({
           Step {step} of 6: {stepTitles[step - 1]}
         </div>
 
-        <div className="min-h-[320px]">
+        <div className="min-h-[320px] min-w-0 overflow-x-hidden">
           {renderStep()}
         </div>
 

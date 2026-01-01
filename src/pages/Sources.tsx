@@ -449,9 +449,9 @@ const Sources = () => {
                     return (
                       <div
                         key={source.id}
-                        className="flex items-center gap-4 p-4 rounded-lg bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-colors group overflow-hidden"
+                        className="flex items-center gap-4 p-4 rounded-lg bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-colors group overflow-hidden w-full max-w-full min-w-0"
                       >
-                        <div 
+                        <div
                           className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
                           style={{ backgroundColor: `${subject.color}20` }}
                         >
@@ -467,11 +467,16 @@ const Sources = () => {
                               {source.type}
                             </Badge>
                           </div>
+
                           {source.url && (
-                            <p className="text-sm text-muted-foreground truncate mt-0.5 select-all cursor-text" title={source.url}>
+                            <p
+                              className="text-sm text-muted-foreground truncate mt-0.5 block max-w-full select-all cursor-text"
+                              title={source.url}
+                            >
                               {source.url}
                             </p>
                           )}
+
                           {source.content && source.type === 'text' && (
                             <p className="text-sm text-muted-foreground truncate mt-0.5">
                               {source.content.substring(0, 100)}...
@@ -479,7 +484,7 @@ const Sources = () => {
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                           {source.type === 'link' && (
                             <Button
                               variant="ghost"

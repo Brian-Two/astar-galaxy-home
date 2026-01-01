@@ -460,15 +460,27 @@ const Sources = () => {
 
                         <div className="flex-1 min-w-0 overflow-hidden">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-medium text-foreground truncate block min-w-0 flex-1">
-                              {source.title}
-                            </span>
+                            {source.type === 'file' && source.url ? (
+                              <a
+                                href={source.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-medium text-foreground truncate block min-w-0 flex-1 hover:text-primary hover:underline transition-colors"
+                                title={source.title}
+                              >
+                                {source.title}
+                              </a>
+                            ) : (
+                              <span className="font-medium text-foreground truncate block min-w-0 flex-1">
+                                {source.title}
+                              </span>
+                            )}
                             <Badge variant="outline" className="text-xs shrink-0">
                               {source.type}
                             </Badge>
                           </div>
 
-                          {source.url && (
+                          {source.type === 'link' && source.url && (
                             <p
                               className="text-sm text-muted-foreground truncate mt-0.5 block max-w-full select-all cursor-text"
                               title={source.url}

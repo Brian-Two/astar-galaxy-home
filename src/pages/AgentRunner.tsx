@@ -442,8 +442,9 @@ const AgentRunner = () => {
     );
   }
 
-  const visibleObjectives = agent.learningObjectives.filter(o => o.showToOthers);
-  // Display text based on selected index
+  // Use all objectives (they're all visible by default from DB mapping)
+  const visibleObjectives = agent.learningObjectives;
+  // Display text based on selected index  
   const displayedObjectiveText = visibleObjectives[activeObjectiveIndex]?.text || visibleObjectives[0]?.text || '';
 
   return (
@@ -574,10 +575,10 @@ const AgentRunner = () => {
                       >
                         <Star
                           className={`w-5 h-5 transition-all ${
-                            isHit || isActive
-                              ? 'fill-white text-white'
-                              : 'text-slate-500'
-                          } ${isHit ? 'drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]' : ''}`}
+                            isHit
+                              ? 'fill-white text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]'
+                              : 'text-slate-400'
+                          }`}
                         />
                         {/* Subtle sparkle for completed */}
                         {isHit && (
@@ -607,8 +608,7 @@ const AgentRunner = () => {
             <div className="py-4 space-y-4 max-w-3xl mx-auto">
               {messages.length === 0 && (
                 <div className="text-center py-12">
-                  <Sparkles className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-lg">
                     Start a conversation with {agent.name}
                   </p>
                   {agent.description && (

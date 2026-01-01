@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { X, Star, Send, Loader2, FolderOpen, Sparkles, ArrowUp } from 'lucide-react';
+import { X, Star, Loader2, Sparkles, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +8,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePlanets } from '@/hooks/usePlanets';
 import { useAgentConversation, Message } from '@/hooks/useAgentConversation';
 import { useObjectiveProgress } from '@/hooks/useObjectiveProgress';
+import { usePlanetSources } from '@/hooks/usePlanetSources';
 import { CollapsedSidebar } from '@/components/navigation/CollapsedSidebar';
+import { StarFloodAnimation } from '@/components/astar/StarFloodAnimation';
+import { SourcesPopup } from '@/components/astar/SourcesPopup';
 import { toast } from 'sonner';
 import { Agent, LearningObjective, AgentGuardrails } from '@/components/planet/types';
 import astarLogo from '@/assets/astar-logo-new.png';
@@ -100,7 +103,7 @@ function mapDbAgentToAgent(db: DbAgent): Agent {
 const AgentRunner = () => {
   const { planetId, agentId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -111,12 +114,17 @@ const AgentRunner = () => {
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [activeObjectiveIndex, setActiveObjectiveIndex] = useState<number | null>(null);
+  const [showStarFlood, setShowStarFlood] = useState(false);
+  const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
 
   // Get planet info
   const { planets } = usePlanets();
   const planet = planets.find(p => p.id === planetId);
   const planetColor = planet?.color || '#5A67D8';
   const planetName = planet?.name || 'Planet';
+
+  // Sources hook
+  const { sources, addSource } = usePlanetSources(planetId);
 
   // Conversation and progress hooks
   const {
@@ -153,7 +161,9 @@ const AgentRunner = () => {
           return;
         }
 
-        setAgent(mapDbAgentToAgent(data as DbAgent));
+        const mappedAgent = mapDbAgentToAgent(data as DbAgent);
+        setAgent(mappedAgent);
+        setSelectedSourceIds(mappedAgent.selectedSourceIds);
       } catch (error) {
         console.error('Error fetching agent:', error);
         toast.error('Failed to load agent');
@@ -223,13 +233,13 @@ const AgentRunner = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Auto-resize textarea
+  // Auto-resize textarea - expand upwards without scrollbar
   const adjustTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      const maxHeight = 120; // ~4 lines
-      textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
+      textarea.style.height = textarea.scrollHeight + 'px';
+      textarea.style.overflow = 'hidden';
     }
   }, []);
 
@@ -243,6 +253,22 @@ const AgentRunner = () => {
       navigate(`/planet/${encodeURIComponent(planetName)}`);
     }, 250);
   };
+
+  // Award stars and show animation
+  const awardStarsForObjective = useCallback(async (objectiveIndex: number) => {
+    // Mark as hit in DB
+    const success = await markObjectiveHit(objectiveIndex);
+    if (success) {
+      // Award +10 stars to profile
+      if (profile) {
+        const newStars = (profile.stars || 0) + 10;
+        await updateProfile({ stars: newStars });
+      }
+      
+      // Show flood animation
+      setShowStarFlood(true);
+    }
+  }, [markObjectiveHit, profile, updateProfile]);
 
   // Check for objective completion after assistant response
   const checkObjectiveCompletion = useCallback(async (
@@ -275,16 +301,15 @@ const AgentRunner = () => {
 
       for (const idx of hitIndexes) {
         if (!isObjectiveHit(idx)) {
-          const success = await markObjectiveHit(idx);
-          if (success) {
-            toast.success(`Objective completed: "${objectives[idx]?.text.substring(0, 50)}..."`);
-          }
+          await awardStarsForObjective(idx);
+          toast.success(`Objective completed: "${objectives[idx]?.text.substring(0, 50)}..."`);
+          break; // Only show one animation at a time
         }
       }
     } catch (error) {
       console.error('Error checking objectives:', error);
     }
-  }, [agent, isObjectiveHit, markObjectiveHit]);
+  }, [agent, isObjectiveHit, awardStarsForObjective]);
 
   const handleSendMessage = async (text?: string) => {
     const messageText = text || input.trim();
@@ -406,6 +431,18 @@ const AgentRunner = () => {
     }
   };
 
+  const handleToggleSource = (sourceId: string) => {
+    setSelectedSourceIds(prev => 
+      prev.includes(sourceId)
+        ? prev.filter(id => id !== sourceId)
+        : [...prev, sourceId]
+    );
+  };
+
+  const handleAddSource = async (type: 'link' | 'text', title: string, content?: string) => {
+    await addSource(type, title, content);
+  };
+
   const quickActions = agent ? (quickActionsByType[agent.template] || ['Help me learn', 'Explain this', 'Quiz me']) : [];
 
   const loading = agentLoading || conversationLoading;
@@ -435,6 +472,13 @@ const AgentRunner = () => {
   return (
     <div className="min-h-screen flex w-full bg-background overflow-hidden relative">
       <CollapsedSidebar />
+
+      {/* Star flood animation overlay */}
+      <StarFloodAnimation
+        isVisible={showStarFlood}
+        onComplete={() => setShowStarFlood(false)}
+        duration={5000}
+      />
 
       <div
         className="flex-1 flex flex-col relative"
@@ -523,8 +567,19 @@ const AgentRunner = () => {
           {visibleObjectives.length > 0 && (
             <div className="px-6 py-4 border-b border-border/30">
               <div className="flex items-center gap-4">
-                {/* Star icons */}
-                <div className="flex items-center gap-1.5">
+                {/* Label */}
+                <span className="text-sm font-medium text-foreground whitespace-nowrap">
+                  Learning Objectives
+                </span>
+
+                {/* Star icons in pill container */}
+                <div 
+                  className="flex items-center gap-0.5 px-2 py-1 rounded-full"
+                  style={{ 
+                    border: `1.5px solid ${planetColor}40`,
+                    backgroundColor: `${planetColor}10`
+                  }}
+                >
                   {visibleObjectives.map((obj, idx) => {
                     const isHit = isObjectiveHit(idx);
                     const isActive = activeObjectiveIndex === idx;
@@ -532,29 +587,38 @@ const AgentRunner = () => {
                       <button
                         key={obj.id}
                         onClick={() => setActiveObjectiveIndex(isActive ? null : idx)}
-                        className="relative p-1.5 rounded-full transition-all"
+                        className="relative w-7 h-7 flex items-center justify-center rounded-full transition-all"
                         style={{
                           boxShadow: isActive 
-                            ? `0 0 0 2px ${planetColor}60` 
+                            ? `0 0 0 2px ${planetColor}` 
                             : 'none',
+                          backgroundColor: isActive ? `${planetColor}20` : 'transparent',
                         }}
                         title={obj.text}
                       >
-                        <Star
-                          className={`w-5 h-5 transition-all ${
-                            isHit || isActive
-                              ? 'fill-white text-white'
-                              : 'text-slate-500'
-                          } ${isHit ? 'drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]' : ''}`}
-                        />
+                        <span className={`text-sm font-medium transition-all ${
+                          isHit 
+                            ? 'text-white' 
+                            : isActive 
+                              ? 'text-foreground' 
+                              : 'text-muted-foreground'
+                        }`}>
+                          {idx + 1}
+                        </span>
                         {/* Subtle sparkle for completed */}
                         {isHit && (
-                          <Sparkles className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 text-white/70" />
+                          <Sparkles 
+                            className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5" 
+                            style={{ color: planetColor }}
+                          />
                         )}
                       </button>
                     );
                   })}
                 </div>
+
+                {/* Divider */}
+                <div className="w-px h-5 bg-border/50" />
                 
                 {/* Objective text */}
                 <span className="text-sm text-muted-foreground truncate flex-1">
@@ -636,23 +700,24 @@ const AgentRunner = () => {
               <div 
                 className="relative flex items-end gap-2 rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 transition-colors focus-within:border-slate-600"
               >
-                {/* Sources button */}
-                <button
-                  onClick={() => navigate(`/planets/${planetId}/sources`)}
-                  className="shrink-0 p-2 -ml-2 rounded-lg text-slate-400 hover:text-slate-300 hover:bg-slate-800/50 transition-colors"
-                  title="View sources"
-                >
-                  <FolderOpen className="w-5 h-5" />
-                </button>
+                {/* Sources popup button */}
+                <SourcesPopup
+                  sources={sources}
+                  selectedSourceIds={selectedSourceIds}
+                  onToggleSource={handleToggleSource}
+                  onAddSource={handleAddSource}
+                  useAllSources={agent.useAllSources}
+                  planetColor={planetColor}
+                />
 
-                {/* Textarea */}
+                {/* Textarea - expands upward, no scrollbar */}
                 <textarea
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={`Message ${agent.name}...`}
-                  className="flex-1 bg-transparent border-0 text-foreground placeholder:text-slate-500 resize-none focus:outline-none focus:ring-0 min-h-[24px] max-h-[120px] py-0.5"
+                  className="flex-1 bg-transparent border-0 text-foreground placeholder:text-slate-500 resize-none focus:outline-none focus:ring-0 min-h-[24px] py-0.5 overflow-hidden"
                   style={{ height: '24px' }}
                   disabled={isStreaming}
                   rows={1}

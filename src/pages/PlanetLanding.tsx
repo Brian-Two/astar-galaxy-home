@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Users, BookOpen, Monitor, ChevronUp, ChevronLeft, ChevronRight, Plus, Bot } from 'lucide-react';
-import { subjects } from '@/data/subjects';
 import { Sidebar } from '@/components/navigation/Sidebar';
 import { UserStatus } from '@/components/galaxy/UserStatus';
 import { CreateAgentModal } from '@/components/planet/CreateAgentModal';
@@ -9,6 +8,7 @@ import { AgentDetailsPanel } from '@/components/planet/AgentDetailsPanel';
 import { Agent, agentTemplates } from '@/components/planet/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { usePlanets } from '@/hooks/usePlanets';
 import { toast } from 'sonner';
 
 interface OtherPlanet {
@@ -41,26 +41,33 @@ const PlanetLanding = () => {
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [sourceCount, setSourceCount] = useState(0);
   const { user } = useAuth();
+  const { planets } = usePlanets();
 
-  // Find the subject from data
+  // Find the subject from user's planets
   const decodedName = subjectName ? decodeURIComponent(subjectName) : searchParams.get('subject') || 'Linear Algebra';
-  const subject = subjects.find(s => s.name === decodedName) || {
+  const planet = planets.find(p => p.name === decodedName || p.id === decodedName);
+  const subject = planet ? {
+    name: planet.name,
+    color: planet.color,
+    lastActiveDaysAgo: planet.lastActiveDaysAgo,
+    stats: planet.stats,
+  } : {
     name: decodedName,
     color: '#5A67D8',
     lastActiveDaysAgo: 0,
     stats: { assignmentsCompleted: 0, studySessions: 0, projects: 0 }
   };
 
-  const planetId = subject.name.toLowerCase().replace(/\s/g, '-');
+  const planetId = planet?.id || subject.name.toLowerCase().replace(/\s/g, '-');
 
   // Get other planets for orbiting
-  const otherPlanets: OtherPlanet[] = subjects
-    .filter(s => s.name !== subject.name)
+  const otherPlanets: OtherPlanet[] = planets
+    .filter(p => p.name !== subject.name)
     .slice(0, 4)
-    .map((s, i) => ({
-      id: s.name.toLowerCase().replace(/\s/g, '-'),
-      name: s.name,
-      color: s.color,
+    .map((p, i) => ({
+      id: p.id,
+      name: p.name,
+      color: p.color,
       orbitRadius: 100 + (i * 35),
       orbitSpeed: 0.0003 + (i * 0.0001),
       startAngle: (i * Math.PI) / 2,

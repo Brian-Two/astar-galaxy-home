@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthGate } from '@/hooks/useAuthGate';
 import { toast } from 'sonner';
-import { subjects } from '@/data/subjects';
+import { usePlanets } from '@/hooks/usePlanets';
 import { CollapsedSidebar } from '@/components/navigation/CollapsedSidebar';
 import { FileUpload } from '@/components/sources/FileUpload';
 
@@ -63,9 +63,11 @@ const Sources = () => {
   const [newSourceContent, setNewSourceContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Find planet info from subjects
+  // Find planet info from user's planets
+  const { planets } = usePlanets();
   const decodedPlanetId = planetId ? decodeURIComponent(planetId) : '';
-  const subject = subjects.find(s => s.name.toLowerCase().replace(/\s/g, '-') === decodedPlanetId) || {
+  const planet = planets.find(p => p.id === decodedPlanetId || p.name.toLowerCase().replace(/\s/g, '-') === decodedPlanetId);
+  const subject = planet ? { name: planet.name, color: planet.color } : {
     name: decodedPlanetId.replace(/-/g, ' '),
     color: '#5A67D8',
   };

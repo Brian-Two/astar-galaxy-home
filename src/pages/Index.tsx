@@ -8,8 +8,7 @@ import { Sidebar } from '@/components/navigation/Sidebar';
 import { AddPlanetButton } from '@/components/galaxy/AddPlanetButton';
 import { getOrbitRadius, getPlanetAngle, orbitRadii } from '@/data/subjects';
 import { usePlanets, Planet as PlanetType } from '@/hooks/usePlanets';
-import { Loader2, Rocket } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetType | null>(null);
@@ -78,21 +77,6 @@ const Index = () => {
         </div>
       )}
 
-      {/* Empty state */}
-      {!loading && planets.length === 0 && (
-        <div className="fixed inset-0 flex items-center justify-center z-25 pointer-events-none">
-          <div className="flex flex-col items-center gap-4 text-center max-w-md px-6 pointer-events-auto">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <Rocket className="w-10 h-10 text-primary" />
-            </div>
-            <h2 className="text-xl font-semibold text-foreground">No planets yet</h2>
-            <p className="text-muted-foreground text-sm">
-              Create your first planet to start organizing your learning journey. Each planet represents a subject you're studying.
-            </p>
-            <AddPlanetButton variant="button" />
-          </div>
-        </div>
-      )}
 
       {/* Planets - Orbiting */}
       {!loading && planets.length > 0 && (
@@ -139,8 +123,8 @@ const Index = () => {
         </div>
       )}
 
-      {/* Add Planet Button - only show if we have planets */}
-      {!loading && planets.length > 0 && <AddPlanetButton />}
+      {/* Add Planet Button - always show */}
+      {!loading && <AddPlanetButton />}
 
       {/* Subject Panel */}
       {selectedPlanet && (

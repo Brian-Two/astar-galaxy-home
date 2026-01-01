@@ -30,12 +30,13 @@ import {
 
 interface SubjectPanelProps {
   subject: Subject | null;
+  planetId?: string;
   onClose: () => void;
-  onDelete: (name: string) => void;
+  onDelete: () => void;
   onRename: (oldName: string, newName: string) => void;
 }
 
-export const SubjectPanel = ({ subject, onClose, onDelete, onRename }: SubjectPanelProps) => {
+export const SubjectPanel = ({ subject, planetId, onClose, onDelete, onRename }: SubjectPanelProps) => {
   const navigate = useNavigate();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
@@ -48,7 +49,7 @@ export const SubjectPanel = ({ subject, onClose, onDelete, onRename }: SubjectPa
   };
 
   const handleConfirmDelete = () => {
-    onDelete(subject.name);
+    onDelete();
     setShowDeleteConfirm(false);
   };
 
@@ -202,6 +203,7 @@ export const SubjectPanel = ({ subject, onClose, onDelete, onRename }: SubjectPa
         <DialogContent className="glass-panel border-border">
           <DialogHeader>
             <DialogTitle className="text-foreground">Rename Planet</DialogTitle>
+            <p className="text-sm text-muted-foreground">Enter a new name for this planet.</p>
           </DialogHeader>
           <div className="py-4">
             <Input

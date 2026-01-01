@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      planets: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string
+          id: string
+          last_active_at: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          last_active_at?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          last_active_at?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           bartle_primary_type: string | null

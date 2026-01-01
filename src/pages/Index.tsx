@@ -6,29 +6,36 @@ import { SubjectPanel } from '@/components/galaxy/SubjectPanel';
 import { UserStatus } from '@/components/galaxy/UserStatus';
 import { Sidebar } from '@/components/navigation/Sidebar';
 import { AddPlanetButton } from '@/components/galaxy/AddPlanetButton';
-import { subjects as initialSubjects, getOrbitRadius, getPlanetAngle, orbitRadii, Subject } from '@/data/subjects';
+import { getOrbitRadius, getPlanetAngle, orbitRadii } from '@/data/subjects';
+import { usePlanets, Planet as PlanetType } from '@/hooks/usePlanets';
+import { Loader2, Rocket } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [subjects, setSubjects] = useState<Subject[]>(initialSubjects);
+  const [selectedPlanet, setSelectedPlanet] = useState<PlanetType | null>(null);
+  const { planets, loading, updatePlanet, deletePlanet } = usePlanets();
 
-  const handleAddPlanet = (newSubject: Subject) => {
-    setSubjects((prev) => [...prev, newSubject]);
-  };
-
-  const handleDeletePlanet = (subjectName: string) => {
-    setSubjects((prev) => prev.filter((s) => s.name !== subjectName));
-    setSelectedSubject(null);
-  };
-
-  const handleRenamePlanet = (oldName: string, newName: string) => {
-    setSubjects((prev) =>
-      prev.map((s) => (s.name === oldName ? { ...s, name: newName } : s))
-    );
-    if (selectedSubject?.name === oldName) {
-      setSelectedSubject((prev) => (prev ? { ...prev, name: newName } : null));
+  const handleDeletePlanet = async (planetId: string) => {
+    const success = await deletePlanet(planetId);
+    if (success) {
+      setSelectedPlanet(null);
     }
   };
+
+  const handleRenamePlanet = async (planetId: string, newName: string) => {
+    const success = await updatePlanet(planetId, { name: newName });
+    if (success && selectedPlanet?.id === planetId) {
+      setSelectedPlanet((prev) => (prev ? { ...prev, name: newName } : null));
+    }
+  };
+
+  // Convert Planet to Subject format for existing components
+  const planetAsSubject = selectedPlanet ? {
+    name: selectedPlanet.name,
+    lastActiveDaysAgo: selectedPlanet.lastActiveDaysAgo,
+    color: selectedPlanet.color,
+    stats: selectedPlanet.stats,
+  } : null;
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -39,7 +46,6 @@ const Index = () => {
       
       {/* User Status */}
       <UserStatus />
-
 
       {/* Center Star */}
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-20">
@@ -62,51 +68,90 @@ const Index = () => {
         ))}
       </div>
 
+      {/* Loading state */}
+      {loading && (
+        <div className="fixed inset-0 flex items-center justify-center z-30 pointer-events-none">
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="text-sm">Loading your galaxy...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && planets.length === 0 && (
+        <div className="fixed inset-0 flex items-center justify-center z-25 pointer-events-none">
+          <div className="flex flex-col items-center gap-4 text-center max-w-md px-6 pointer-events-auto">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Rocket className="w-10 h-10 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold text-foreground">No planets yet</h2>
+            <p className="text-muted-foreground text-sm">
+              Create your first planet to start organizing your learning journey. Each planet represents a subject you're studying.
+            </p>
+            <AddPlanetButton variant="button" />
+          </div>
+        </div>
+      )}
+
       {/* Planets - Orbiting */}
-      <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-none">
-        {subjects.map((subject, index) => {
-          const orbitRadius = getOrbitRadius(subject.lastActiveDaysAgo);
-          const baseAngle = getPlanetAngle(index, subjects.length);
-          // Slower rotation for outer orbits
-          const duration = 60 + orbitRadius * 0.2;
-          
-          return (
-            <div
-              key={subject.name}
-              className="absolute origin-center"
-              style={{
-                animation: `orbit ${duration}s linear infinite`,
-                animationDelay: `-${(baseAngle / 360) * duration}s`,
-              }}
-            >
+      {!loading && planets.length > 0 && (
+        <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-none">
+          {planets.map((planet, index) => {
+            const orbitRadius = getOrbitRadius(planet.lastActiveDaysAgo);
+            const baseAngle = getPlanetAngle(index, planets.length);
+            // Slower rotation for outer orbits
+            const duration = 60 + orbitRadius * 0.2;
+            
+            // Convert to subject format for Planet component
+            const subject = {
+              name: planet.name,
+              lastActiveDaysAgo: planet.lastActiveDaysAgo,
+              color: planet.color,
+              stats: planet.stats,
+            };
+            
+            return (
               <div
-                className="pointer-events-auto"
+                key={planet.id}
+                className="absolute origin-center"
                 style={{
-                  transform: `translateX(${orbitRadius}px)`,
+                  animation: `orbit ${duration}s linear infinite`,
+                  animationDelay: `-${(baseAngle / 360) * duration}s`,
                 }}
               >
-                <Planet
-                  subject={subject}
-                  onSelect={setSelectedSubject}
-                  orbitDuration={duration}
-                  animationDelay={-(baseAngle / 360) * duration}
-                />
+                <div
+                  className="pointer-events-auto"
+                  style={{
+                    transform: `translateX(${orbitRadius}px)`,
+                  }}
+                >
+                  <Planet
+                    subject={subject}
+                    onSelect={() => setSelectedPlanet(planet)}
+                    orbitDuration={duration}
+                    animationDelay={-(baseAngle / 360) * duration}
+                  />
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Add Planet Button */}
-      <AddPlanetButton onAddPlanet={handleAddPlanet} existingSubjects={subjects} />
+      {/* Add Planet Button - only show if we have planets */}
+      {!loading && planets.length > 0 && <AddPlanetButton />}
 
       {/* Subject Panel */}
-      <SubjectPanel 
-        subject={selectedSubject} 
-        onClose={() => setSelectedSubject(null)}
-        onDelete={handleDeletePlanet}
-        onRename={handleRenamePlanet}
-      />
+      {selectedPlanet && (
+        <SubjectPanel 
+          subject={planetAsSubject!}
+          planetId={selectedPlanet.id}
+          onClose={() => setSelectedPlanet(null)}
+          onDelete={() => handleDeletePlanet(selectedPlanet.id)}
+          onRename={(_, newName) => handleRenamePlanet(selectedPlanet.id, newName)}
+        />
+      )}
 
       {/* Bottom hint */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-center z-30">

@@ -62,17 +62,41 @@ const defaultGuardrails: AgentGuardrails = {
 };
 
 function mapDbAgentToAgent(db: DbAgent): Agent {
-  const objectives = Array.isArray(db.learning_objectives)
-    ? (db.learning_objectives as { text: string; visible?: boolean; showToOthers?: boolean }[]).map((o, i) => ({
-        id: `obj-${i}`,
-        text: o.text,
-        showToOthers: o.showToOthers ?? o.visible ?? true,
-      }))
+  const raw = db.learning_objectives as unknown;
+
+  const objectives = Array.isArray(raw)
+    ? (raw as any[])
+        .map((o, i) => {
+          // string[] support
+          if (typeof o === 'string') {
+            return {
+              id: `obj-${i}`,
+              text: o,
+              showToOthers: true,
+            };
+          }
+
+          // {text: ...}[] support
+          if (o && typeof o === 'object') {
+            const text = (o as any).text;
+            if (typeof text === 'string' && text.trim().length > 0) {
+              return {
+                id: `obj-${i}`,
+                text,
+                showToOthers: (o as any).showToOthers ?? (o as any).visible ?? true,
+              };
+            }
+          }
+
+          return null;
+        })
+        .filter(Boolean)
     : [];
 
-  const rawGuardrails = typeof db.guardrails === 'object' && db.guardrails !== null
-    ? (db.guardrails as Partial<AgentGuardrails>)
-    : {};
+  const rawGuardrails =
+    typeof db.guardrails === 'object' && db.guardrails !== null
+      ? (db.guardrails as Partial<AgentGuardrails>)
+      : {};
 
   const guardrails: AgentGuardrails = { ...defaultGuardrails, ...rawGuardrails };
 
@@ -81,16 +105,12 @@ function mapDbAgentToAgent(db: DbAgent): Agent {
     name: db.name,
     template: db.type as Agent['template'],
     description: db.description || '',
-    learningObjectives: objectives,
+    learningObjectives: objectives as LearningObjective[],
     guardrails,
     scaffoldingLevel: db.scaffolding_level as 'light' | 'medium' | 'heavy',
-    scaffoldingBehaviors: Array.isArray(db.scaffolding_behaviors)
-      ? (db.scaffolding_behaviors as string[])
-      : [],
+    scaffoldingBehaviors: Array.isArray(db.scaffolding_behaviors) ? (db.scaffolding_behaviors as string[]) : [],
     useAllSources: db.source_mode === 'all',
-    selectedSourceIds: Array.isArray(db.selected_source_ids)
-      ? (db.selected_source_ids as string[])
-      : [],
+    selectedSourceIds: Array.isArray(db.selected_source_ids) ? (db.selected_source_ids as string[]) : [],
     timesUsed: db.times_used,
     uniqueUsers: db.unique_users,
     createdAt: new Date(db.created_at),
@@ -168,7 +188,7 @@ const AgentRunner = () => {
     fetchAgent();
   }, [agentId, planetId, user, navigate, planetName]);
 
-  // Animated stars background
+  // Animated stars background with DPR support
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -177,21 +197,31 @@ const AgentRunner = () => {
     if (!ctx) return;
 
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = 160;
+      const dpr = window.devicePixelRatio || 1;
+      const cssWidth = window.innerWidth;
+      const cssHeight = 160;
+
+      canvas.style.width = `${cssWidth}px`;
+      canvas.style.height = `${cssHeight}px`;
+
+      canvas.width = Math.floor(cssWidth * dpr);
+      canvas.height = Math.floor(cssHeight * dpr);
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
+    // More stars with brighter opacity
     const stars: { x: number; y: number; size: number; opacity: number; twinkleSpeed: number }[] = [];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 180; i++) {
       stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 1.5 + 0.5,
-        opacity: Math.random() * 0.5 + 0.3,
-        twinkleSpeed: Math.random() * 0.02 + 0.01,
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * 160,
+        size: Math.random() * 1.8 + 0.6,
+        opacity: Math.random() * 0.6 + 0.4,
+        twinkleSpeed: Math.random() * 0.03 + 0.01,
       });
     }
 
@@ -200,13 +230,13 @@ const AgentRunner = () => {
 
     const animate = () => {
       time += 0.016;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, window.innerWidth, 160);
 
       stars.forEach(star => {
         const twinkle = Math.sin(time * star.twinkleSpeed * 60) * 0.3 + 0.7;
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity * twinkle})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, star.opacity * twinkle)})`;
         ctx.fill();
       });
 
@@ -444,8 +474,9 @@ const AgentRunner = () => {
 
   // Use all objectives (they're all visible by default from DB mapping)
   const visibleObjectives = agent.learningObjectives;
-  // Display text based on selected index  
-  const displayedObjectiveText = visibleObjectives[activeObjectiveIndex]?.text || visibleObjectives[0]?.text || '';
+  // Display text based on selected index with safe clamping
+  const safeIndex = visibleObjectives.length > 0 ? Math.min(activeObjectiveIndex, visibleObjectives.length - 1) : 0;
+  const displayedObjectiveText = visibleObjectives.length > 0 ? visibleObjectives[safeIndex]?.text : '';
 
   return (
     <div className="min-h-screen flex w-full bg-background overflow-hidden relative">
@@ -596,7 +627,7 @@ const AgentRunner = () => {
                 <div className="w-px h-5 bg-border/50" />
                 
                 {/* Current objective text */}
-                <span className="text-sm text-muted-foreground truncate flex-1">
+                <span className="text-sm text-foreground/80 truncate flex-1">
                   {displayedObjectiveText}
                 </span>
               </div>

@@ -449,7 +449,7 @@ const Sources = () => {
                     return (
                       <div
                         key={source.id}
-                        className="flex items-center gap-4 p-4 rounded-lg bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-colors group"
+                        className="flex items-center gap-4 p-4 rounded-lg bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-colors group overflow-hidden"
                       >
                         <div 
                           className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
@@ -458,9 +458,9 @@ const Sources = () => {
                           <Icon className="w-5 h-5" style={{ color: subject.color }} />
                         </div>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-foreground truncate">
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-medium text-foreground truncate block min-w-0 flex-1">
                               {source.title}
                             </span>
                             <Badge variant="outline" className="text-xs shrink-0">
@@ -468,7 +468,7 @@ const Sources = () => {
                             </Badge>
                           </div>
                           {source.url && (
-                            <p className="text-sm text-muted-foreground truncate mt-0.5">
+                            <p className="text-sm text-muted-foreground truncate mt-0.5 select-all cursor-text" title={source.url}>
                               {source.url}
                             </p>
                           )}

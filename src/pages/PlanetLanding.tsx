@@ -251,8 +251,10 @@ const PlanetLanding = () => {
   const handleStartSession = async (agent: Agent) => {
     // Increment usage stats in DB
     await incrementUsage(agent.id);
-    toast.success(`Starting session with ${agent.name}...`);
-    // In the future, navigate to agent-specific chat
+    // Navigate to agent runner page
+    if (planet?.id) {
+      navigate(`/planets/${planet.id}/agents/${agent.id}`);
+    }
   };
 
   const navigatePage = (direction: 'left' | 'right') => {

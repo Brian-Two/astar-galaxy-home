@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_conversations: {
+        Row: {
+          agent_id: string
+          created_at: string
+          created_by: string
+          id: string
+          planet_id: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          planet_id: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          planet_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_conversations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_conversations_planet_id_fkey"
+            columns: ["planet_id"]
+            isOneToOne: false
+            referencedRelation: "planets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "agent_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           created_at: string
@@ -72,6 +146,57 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "agents_planet_id_fkey"
+            columns: ["planet_id"]
+            isOneToOne: false
+            referencedRelation: "planets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      objective_progress: {
+        Row: {
+          agent_id: string
+          created_at: string
+          hit_at: string | null
+          id: string
+          objective_index: number
+          planet_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          hit_at?: string | null
+          id?: string
+          objective_index: number
+          planet_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          hit_at?: string | null
+          id?: string
+          objective_index?: number
+          planet_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "objective_progress_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "objective_progress_planet_id_fkey"
             columns: ["planet_id"]
             isOneToOne: false
             referencedRelation: "planets"

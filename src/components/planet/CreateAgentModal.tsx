@@ -635,14 +635,14 @@ export function CreateAgentModal({
             ) : (
               <>
                 {!useAllSources && (
-                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto overflow-x-hidden pr-1">
                     {sources.map(source => {
                       const IconComponent = typeIcons[source.type];
                       return (
                         <button
                           key={source.id}
                           onClick={() => toggleSourceSelection(source.id)}
-                          className={`w-full p-3 rounded-lg border text-left transition-all flex items-center gap-3 ${
+                          className={`w-full p-3 rounded-lg border text-left transition-all flex items-center gap-3 overflow-hidden ${
                             selectedSourceIds.includes(source.id)
                               ? 'border-2 bg-slate-800/50'
                               : 'border-slate-700 hover:border-slate-600 bg-slate-900/50'
@@ -651,13 +651,13 @@ export function CreateAgentModal({
                             borderColor: selectedSourceIds.includes(source.id) ? planetColor : undefined,
                           }}
                         >
-                          <div className={`w-5 h-5 rounded border flex items-center justify-center ${
+                          <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 ${
                             selectedSourceIds.includes(source.id) ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'
                           }`}>
                             {selectedSourceIds.includes(source.id) && <Check className="w-3 h-3 text-white" />}
                           </div>
-                          <IconComponent className="w-4 h-4 text-muted-foreground" />
-                          <div className="flex-1 min-w-0">
+                          <IconComponent className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0 overflow-hidden">
                             <div className="font-medium text-foreground text-sm truncate">{source.title}</div>
                           </div>
                         </button>

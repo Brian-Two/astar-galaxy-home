@@ -9,6 +9,7 @@ import { Agent, agentTemplates } from '@/components/planet/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { usePlanets } from '@/hooks/usePlanets';
+import { useAgents } from '@/hooks/useAgents';
 import { toast } from 'sonner';
 
 interface OtherPlanet {
@@ -35,17 +36,21 @@ const PlanetLanding = () => {
   const [hoveredTool, setHoveredTool] = useState<string | null>(null);
   const [orbitAngles, setOrbitAngles] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
-  const [agents, setAgents] = useState<Agent[]>([]);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [sourceCount, setSourceCount] = useState(0);
   const { user } = useAuth();
   const { planets } = usePlanets();
-
-  // Find the subject from user's planets
+  
+  // Find the subject from user's planets - need to define before using in hook
   const decodedName = subjectName ? decodeURIComponent(subjectName) : searchParams.get('subject') || 'Linear Algebra';
   const planet = planets.find(p => p.name === decodedName || p.id === decodedName);
+  const planetId = planet?.id;
+  
+  // Use the agents hook for database persistence
+  const { agents, createAgent, incrementUsage } = useAgents(planetId);
+
   const subject = planet ? {
     name: planet.name,
     color: planet.color,
@@ -58,7 +63,8 @@ const PlanetLanding = () => {
     stats: { assignmentsCompleted: 0, studySessions: 0, projects: 0 }
   };
 
-  const planetId = planet?.id || subject.name.toLowerCase().replace(/\s/g, '-');
+  // For sources and navigation, use planet id or fallback
+  const effectivePlanetId = planetId || subject.name.toLowerCase().replace(/\s/g, '-');
 
   // Get other planets for orbiting
   const otherPlanets: OtherPlanet[] = planets
@@ -87,7 +93,7 @@ const PlanetLanding = () => {
       const { count, error } = await supabase
         .from('sources')
         .select('*', { count: 'exact', head: true })
-        .eq('planet_id', planetId)
+        .eq('planet_id', effectivePlanetId)
         .eq('is_deleted', false);
       
       if (!error && count !== null) {
@@ -96,7 +102,7 @@ const PlanetLanding = () => {
     };
     
     fetchSourceCount();
-  }, [user, planetId]);
+  }, [user, effectivePlanetId]);
 
   // Animate orbiting planets
   useEffect(() => {
@@ -222,7 +228,7 @@ const PlanetLanding = () => {
     if (tool === 'workstation') {
       navigate(`/astar-ai?subject=${encodeURIComponent(subject.name)}`);
     } else if (tool === 'sources') {
-      navigate(`/planets/${planetId}/sources`);
+      navigate(`/planets/${effectivePlanetId}/sources`);
     } else {
       console.log(`${tool} clicked`);
     }
@@ -233,25 +239,18 @@ const PlanetLanding = () => {
     setDetailsPanelOpen(true);
   };
 
-  const handleCreateAgent = (agentData: Omit<Agent, 'id' | 'timesUsed' | 'uniqueUsers' | 'createdAt'>) => {
-    const newAgent: Agent = {
-      ...agentData,
-      id: `agent-${Date.now()}`,
-      timesUsed: 0,
-      uniqueUsers: 0,
-      createdAt: new Date(),
-    };
-    setAgents(prev => [...prev, newAgent]);
-    toast.success(`Agent "${newAgent.name}" created!`);
+  const handleCreateAgent = async (agentData: Omit<Agent, 'id' | 'timesUsed' | 'uniqueUsers' | 'createdAt'>) => {
+    const newAgent = await createAgent(agentData);
+    if (newAgent) {
+      toast.success(`Agent "${newAgent.name}" created!`);
+    } else {
+      toast.error('Failed to create agent');
+    }
   };
 
-  const handleStartSession = (agent: Agent) => {
-    // Increment usage stats
-    setAgents(prev => prev.map(a => 
-      a.id === agent.id 
-        ? { ...a, timesUsed: a.timesUsed + 1, uniqueUsers: a.uniqueUsers + 1 }
-        : a
-    ));
+  const handleStartSession = async (agent: Agent) => {
+    // Increment usage stats in DB
+    await incrementUsage(agent.id);
     toast.success(`Starting session with ${agent.name}...`);
     // In the future, navigate to agent-specific chat
   };
@@ -557,7 +556,7 @@ const PlanetLanding = () => {
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onCreateAgent={handleCreateAgent}
-        planetId={planetId}
+        planetId={effectivePlanetId}
         planetColor={subject.color}
       />
 

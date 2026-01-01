@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      agents: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          guardrails: Json
+          id: string
+          learning_objectives: Json
+          name: string
+          planet_id: string
+          scaffolding_behaviors: Json
+          scaffolding_level: string
+          selected_source_ids: Json
+          source_mode: string
+          times_used: number
+          type: string
+          unique_users: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          guardrails?: Json
+          id?: string
+          learning_objectives?: Json
+          name: string
+          planet_id: string
+          scaffolding_behaviors?: Json
+          scaffolding_level?: string
+          selected_source_ids?: Json
+          source_mode?: string
+          times_used?: number
+          type: string
+          unique_users?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          guardrails?: Json
+          id?: string
+          learning_objectives?: Json
+          name?: string
+          planet_id?: string
+          scaffolding_behaviors?: Json
+          scaffolding_level?: string
+          selected_source_ids?: Json
+          source_mode?: string
+          times_used?: number
+          type?: string
+          unique_users?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_planet_id_fkey"
+            columns: ["planet_id"]
+            isOneToOne: false
+            referencedRelation: "planets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planets: {
         Row: {
           color: string

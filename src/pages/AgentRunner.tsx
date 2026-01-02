@@ -12,7 +12,7 @@ import { CollapsedSidebar } from '@/components/navigation/CollapsedSidebar';
 import { StarFloodAnimation } from '@/components/astar/StarFloodAnimation';
 import { toast } from 'sonner';
 import { Agent, LearningObjective, AgentGuardrails } from '@/components/planet/types';
-import astarLogo from '@/assets/astar-logo-new.png';
+
 
 // Quick action chips by agent type
 const quickActionsByType: Record<string, string[]> = {
@@ -475,11 +475,6 @@ const AgentRunner = () => {
               zIndex: 1
             }}
           />
-
-          {/* Logo */}
-          <div className="absolute top-3 left-3 z-20">
-            <img src={astarLogo} alt="ASTAR" className="h-7" />
-          </div>
 
           {/* Close button */}
           <button

@@ -132,6 +132,12 @@ export const usePlanets = () => {
         return null;
       }
 
+      // Check limit of 10 planets
+      if (planets.length >= 10) {
+        console.error('[usePlanets] Cannot add planet: max 10 planets reached');
+        return null;
+      }
+
       console.log('[usePlanets] Creating planet:', { name, color, userId: user.id });
 
       const { data, error } = await supabase
@@ -152,7 +158,7 @@ export const usePlanets = () => {
       console.log('[usePlanets] Created planet:', data.id);
       return mapDbPlanetToPlanet(data);
     },
-    [user]
+    [user, planets.length]
   );
 
   const updatePlanet = useCallback(

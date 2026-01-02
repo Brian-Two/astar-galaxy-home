@@ -175,6 +175,8 @@ const PlanetLanding = () => {
   // Calculate pages and icons
   const maxAgentsOnPage0 = 2;
   const maxAgentsPerPage = 5;
+  const maxAgentsTotal = 10;
+  const isAtAgentLimit = agents.length >= maxAgentsTotal;
   
   const agentsOnPage0 = agents.slice(0, maxAgentsOnPage0);
   const remainingAgents = agents.slice(maxAgentsOnPage0);
@@ -198,8 +200,8 @@ const PlanetLanding = () => {
         icons.push({ type: 'agent', data: agent });
       });
       
-      // Show "new agent" if there's room on page 0
-      if (agentsOnPage0.length < maxAgentsOnPage0) {
+      // Show "new agent" if there's room on page 0 and not at limit
+      if (agentsOnPage0.length < maxAgentsOnPage0 && !isAtAgentLimit) {
         icons.push({ type: 'new' });
       }
       
@@ -213,8 +215,8 @@ const PlanetLanding = () => {
       const icons: { type: 'tool' | 'agent' | 'new'; data?: any }[] = 
         pageAgents.map(agent => ({ type: 'agent', data: agent }));
       
-      // Show "new agent" if there's room
-      if (pageAgents.length < maxAgentsPerPage) {
+      // Show "new agent" if there's room and not at limit
+      if (pageAgents.length < maxAgentsPerPage && !isAtAgentLimit) {
         icons.push({ type: 'new' });
       }
       
@@ -240,6 +242,10 @@ const PlanetLanding = () => {
   };
 
   const handleCreateAgent = async (agentData: Omit<Agent, 'id' | 'timesUsed' | 'uniqueUsers' | 'createdAt'>) => {
+    if (isAtAgentLimit) {
+      toast.error('Maximum 10 agents per planet reached');
+      return;
+    }
     const newAgent = await createAgent(agentData);
     if (newAgent) {
       toast.success(`Agent "${newAgent.name}" created!`);

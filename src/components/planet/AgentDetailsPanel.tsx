@@ -59,7 +59,7 @@ export function AgentDetailsPanel({
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Users className="w-4 h-4" />
-              <span>by {agent.uniqueUsers} students</span>
+              <span>{agent.uniqueUsers === 0 ? 'No students yet' : `by ${agent.uniqueUsers} students`}</span>
             </div>
           </div>
 

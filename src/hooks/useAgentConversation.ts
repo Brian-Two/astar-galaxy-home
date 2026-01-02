@@ -90,9 +90,59 @@ export function useAgentConversation(agentId: string | undefined, planetId: stri
     initializeConversation();
   }, [initializeConversation]);
 
+  // Track user usage for this agent (first message triggers unique user count)
+  const trackUserUsage = useCallback(async (agentId: string) => {
+    if (!user) return;
+
+    try {
+      // Try to insert into agent_users - will fail silently on conflict (already tracked)
+      const { data: insertedUser, error: insertError } = await supabase
+        .from('agent_users')
+        .insert({
+          agent_id: agentId,
+          user_id: user.id,
+        })
+        .select()
+        .maybeSingle();
+
+      // If insert succeeded (new user for this agent), increment unique_users
+      if (insertedUser && !insertError) {
+        // Get current agent stats
+        const { data: agent } = await supabase
+          .from('agents')
+          .select('unique_users')
+          .eq('id', agentId)
+          .single();
+
+        if (agent) {
+          await supabase
+            .from('agents')
+            .update({ unique_users: (agent.unique_users || 0) + 1 })
+            .eq('id', agentId);
+        }
+      }
+
+      // Always increment times_used for each message
+      const { data: agent } = await supabase
+        .from('agents')
+        .select('times_used')
+        .eq('id', agentId)
+        .single();
+
+      if (agent) {
+        await supabase
+          .from('agents')
+          .update({ times_used: (agent.times_used || 0) + 1 })
+          .eq('id', agentId);
+      }
+    } catch (error) {
+      console.error('Error tracking usage:', error);
+    }
+  }, [user]);
+
   // Add a user message
   const addUserMessage = useCallback(async (content: string): Promise<Message | null> => {
-    if (!conversation) return null;
+    if (!conversation || !agentId) return null;
 
     try {
       const { data, error } = await supabase
@@ -114,6 +164,9 @@ export function useAgentConversation(agentId: string | undefined, planetId: stri
 
       setMessages(prev => [...prev, newMsg]);
 
+      // Track usage for this agent
+      await trackUserUsage(agentId);
+
       // Update conversation updated_at
       await supabase
         .from('agent_conversations')
@@ -125,7 +178,7 @@ export function useAgentConversation(agentId: string | undefined, planetId: stri
       console.error('Error adding user message:', error);
       return null;
     }
-  }, [conversation]);
+  }, [conversation, agentId, trackUserUsage]);
 
   // Add an assistant message
   const addAssistantMessage = useCallback(async (content: string): Promise<Message | null> => {

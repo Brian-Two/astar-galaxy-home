@@ -278,8 +278,8 @@ export function CreateAgentModal({
       case 2:
         return objectives.some(o => o.text.trim());
       case 3:
-        // Allow proceeding if: using all sources, has selected sources, or there are no sources
-        return useAllSources || selectedSourceIds.length > 0 || sources.length === 0;
+        // Sources are optional - always allow proceeding
+        return true;
       case 4:
       case 5:
         return true;
@@ -613,7 +613,9 @@ export function CreateAgentModal({
             <p className="text-xs text-muted-foreground italic">
               {useAllSources 
                 ? "This agent will use everything attached to this planet."
-                : "This agent will only use the sources you choose."}
+                : selectedSourceIds.length === 0 
+                  ? "Sources are optional. You can add them later."
+                  : "This agent will only use the sources you choose."}
             </p>
 
             {/* Source list or empty state */}

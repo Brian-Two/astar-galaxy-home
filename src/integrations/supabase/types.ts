@@ -88,6 +88,35 @@ export type Database = {
           },
         ]
       }
+      agent_users: {
+        Row: {
+          agent_id: string
+          first_used_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          first_used_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          first_used_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_users_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           created_at: string

@@ -107,6 +107,12 @@ export function useAgents(planetId: string | undefined) {
   const createAgent = async (data: CreateAgentData): Promise<Agent | null> => {
     if (!user) return null;
 
+    // Check limit of 10 agents per planet
+    if (agents.length >= 10) {
+      console.error('Cannot create agent: max 10 agents per planet reached');
+      return null;
+    }
+
     try {
       const { data: inserted, error } = await supabase
         .from('agents')

@@ -8,7 +8,6 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Room from "./pages/Room";
 import Explore from "./pages/Explore";
-import AstarAI from "./pages/AstarAI";
 import Board from "./pages/Board";
 import Stats from "./pages/Stats";
 import Friends from "./pages/Friends";
@@ -41,7 +40,6 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/room" element={<ProtectedRoute><Room /></ProtectedRoute>} />
             <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-            <Route path="/astar-ai" element={<ProtectedRoute><AstarAI /></ProtectedRoute>} />
             <Route path="/board" element={<ProtectedRoute><Board /></ProtectedRoute>} />
             <Route path="/stats" element={<ProtectedRoute><Stats /></ProtectedRoute>} />
             <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />

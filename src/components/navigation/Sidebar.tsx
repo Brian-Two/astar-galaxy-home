@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Compass, Sparkles, LayoutDashboard, BarChart3, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Home, Compass, LayoutDashboard, BarChart3, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import astarLogo from '@/assets/astar-logo.png';
 const menuItems = [{
@@ -11,10 +11,6 @@ const menuItems = [{
   icon: Compass,
   label: 'Explore',
   path: '/explore'
-}, {
-  icon: Sparkles,
-  label: 'ASTAR.AI',
-  path: '/astar-ai'
 }, {
   icon: LayoutDashboard,
   label: 'Board',

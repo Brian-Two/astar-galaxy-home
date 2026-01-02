@@ -122,7 +122,7 @@ const AgentRunner = () => {
   const { planetId, agentId } = useParams();
   const navigate = useNavigate();
   const { user, profile, updateProfile } = useAuth();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Canvas ref removed - using CSS starfield instead
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -188,68 +188,7 @@ const AgentRunner = () => {
     fetchAgent();
   }, [agentId, planetId, user, navigate, planetName]);
 
-  // Animated stars background with DPR support
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const resizeCanvas = () => {
-      const dpr = window.devicePixelRatio || 1;
-      const cssWidth = window.innerWidth;
-      const cssHeight = 160;
-
-      canvas.style.width = `${cssWidth}px`;
-      canvas.style.height = `${cssHeight}px`;
-
-      canvas.width = Math.floor(cssWidth * dpr);
-      canvas.height = Math.floor(cssHeight * dpr);
-
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    // More stars with brighter opacity
-    const stars: { x: number; y: number; size: number; opacity: number; twinkleSpeed: number }[] = [];
-    for (let i = 0; i < 180; i++) {
-      stars.push({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * 160,
-        size: Math.random() * 1.8 + 0.6,
-        opacity: Math.random() * 0.6 + 0.4,
-        twinkleSpeed: Math.random() * 0.03 + 0.01,
-      });
-    }
-
-    let animationId: number;
-    let time = 0;
-
-    const animate = () => {
-      time += 0.016;
-      ctx.clearRect(0, 0, window.innerWidth, 160);
-
-      stars.forEach(star => {
-        const twinkle = Math.sin(time * star.twinkleSpeed * 60) * 0.3 + 0.7;
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, star.opacity * twinkle)})`;
-        ctx.fill();
-      });
-
-      animationId = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      window.removeEventListener('resize', resizeCanvas);
-      cancelAnimationFrame(animationId);
-    };
-  }, []);
+  // Canvas star animation removed - using CSS starfield instead
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -508,8 +447,8 @@ const AgentRunner = () => {
           }
         `}</style>
 
-        {/* Starry header */}
-        <div className="relative h-40 shrink-0 overflow-hidden">
+        {/* Starry header - reduced to h-32 with CSS starfield */}
+        <div className="relative h-32 shrink-0 overflow-hidden">
           {/* Starfield background */}
           <div 
             className="absolute inset-0" 
@@ -518,45 +457,58 @@ const AgentRunner = () => {
               zIndex: 0
             }}
           />
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ zIndex: 1 }}
+          {/* CSS-based starfield overlay */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-90"
+            style={{
+              backgroundImage: `
+                radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,.85) 50%, transparent 60%),
+                radial-gradient(1px 1px at 80px 120px, rgba(255,255,255,.65) 50%, transparent 60%),
+                radial-gradient(1px 1px at 140px 70px, rgba(255,255,255,.75) 50%, transparent 60%),
+                radial-gradient(1px 1px at 210px 40px, rgba(255,255,255,.55) 50%, transparent 60%),
+                radial-gradient(1px 1px at 260px 110px, rgba(255,255,255,.8) 50%, transparent 60%),
+                radial-gradient(1px 1px at 330px 90px, rgba(255,255,255,.6) 50%, transparent 60%),
+                radial-gradient(1px 1px at 410px 20px, rgba(255,255,255,.7) 50%, transparent 60%)
+              `,
+              backgroundSize: "480px 180px",
+              backgroundRepeat: "repeat",
+              zIndex: 1
+            }}
           />
 
           {/* Logo */}
-          <div className="absolute top-4 left-4 z-20">
-            <img src={astarLogo} alt="ASTAR" className="h-8" />
+          <div className="absolute top-3 left-3 z-20">
+            <img src={astarLogo} alt="ASTAR" className="h-7" />
           </div>
 
           {/* Close button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+            className="absolute top-3 right-3 z-20 p-1.5 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
           >
-            <X className="w-5 h-5 text-slate-300" />
+            <X className="w-4 h-4 text-slate-300" />
           </button>
 
           {/* Agent name */}
           <div className="absolute inset-0 flex items-center justify-center z-10">
-            <h1 className="text-2xl font-display font-semibold text-foreground">{agent.name}</h1>
+            <h1 className="text-xl font-display font-semibold text-foreground">{agent.name}</h1>
           </div>
 
           {/* Curved horizon */}
           <svg
             className="absolute bottom-0 left-0 right-0 w-full"
-            height="56"
-            viewBox="0 0 1440 56"
+            height="48"
+            viewBox="0 0 1440 48"
             preserveAspectRatio="none"
             style={{ transform: 'translateY(1px)', zIndex: 2 }}
           >
             <path
-              d="M0,56 L0,28 Q720,0 1440,28 L1440,56 Z"
+              d="M0,48 L0,24 Q720,0 1440,24 L1440,48 Z"
               fill={planetColor}
               fillOpacity="0.15"
             />
             <path
-              d="M0,28 Q720,0 1440,28"
+              d="M0,24 Q720,0 1440,24"
               fill="none"
               stroke={planetColor}
               strokeOpacity="0.3"
@@ -572,18 +524,18 @@ const AgentRunner = () => {
             background: `linear-gradient(180deg, ${planetColor}15 0%, ${planetColor}08 50%, hsl(230, 35%, 7%) 100%)`,
           }}
         >
-          {/* Learning objectives header - Brisk style */}
+          {/* Learning objectives header - smaller spacing */}
           {visibleObjectives.length > 0 && (
-            <div className="px-6 py-4 border-b border-border/30">
-              <div className="flex items-center gap-4">
+            <div className="px-4 py-3 border-b border-border/30">
+              <div className="flex items-center gap-3">
                 {/* Label */}
-                <span className="text-sm font-medium text-foreground whitespace-nowrap">
+                <span className="text-xs font-semibold text-foreground whitespace-nowrap">
                   Learning Objectives
                 </span>
 
                 {/* Star icons in pill container */}
                 <div 
-                  className="flex items-center gap-0.5 px-2 py-1 rounded-full"
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
                   style={{ 
                     border: `1.5px solid ${planetColor}40`,
                     backgroundColor: `${planetColor}10`
@@ -596,7 +548,7 @@ const AgentRunner = () => {
                       <button
                         key={obj.id}
                         onClick={() => setActiveObjectiveIndex(idx)}
-                        className="relative p-1.5 rounded-full transition-all"
+                        className="relative p-1 rounded-full transition-all"
                         style={{
                           boxShadow: isActive 
                             ? `0 0 0 2px ${planetColor}` 
@@ -605,7 +557,7 @@ const AgentRunner = () => {
                         title={obj.text}
                       >
                         <Star
-                          className={`w-5 h-5 transition-all ${
+                          className={`w-4 h-4 transition-all ${
                             isHit
                               ? 'fill-white text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]'
                               : 'text-slate-400'
@@ -614,7 +566,7 @@ const AgentRunner = () => {
                         {/* Subtle sparkle for completed */}
                         {isHit && (
                           <Sparkles 
-                            className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5" 
+                            className="absolute -top-0.5 -right-0.5 w-2 h-2" 
                             style={{ color: planetColor }}
                           />
                         )}
@@ -624,26 +576,26 @@ const AgentRunner = () => {
                 </div>
 
                 {/* Divider */}
-                <div className="w-px h-5 bg-border/50" />
+                <div className="w-px h-4 bg-border/50" />
                 
                 {/* Current objective text */}
-                <span className="text-sm text-foreground/80 truncate flex-1">
+                <span className="text-xs text-muted-foreground truncate flex-1">
                   {displayedObjectiveText}
                 </span>
               </div>
             </div>
           )}
 
-          {/* Chat area */}
-          <ScrollArea className="flex-1 px-6">
-            <div className="py-4 space-y-4 max-w-3xl mx-auto">
+          {/* Chat area - smaller padding */}
+          <ScrollArea className="flex-1 px-4">
+            <div className="py-3 space-y-3 max-w-3xl mx-auto">
               {messages.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground text-lg">
+                <div className="text-center py-10">
+                  <p className="text-muted-foreground text-sm">
                     Start a conversation with {agent.name}
                   </p>
                   {agent.description && (
-                    <p className="text-sm text-muted-foreground/70 mt-2 max-w-md mx-auto">
+                    <p className="text-xs text-muted-foreground/70 mt-1.5 max-w-md mx-auto">
                       {agent.description}
                     </p>
                   )}
@@ -656,21 +608,21 @@ const AgentRunner = () => {
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                    className={`max-w-[80%] rounded-xl px-3 py-2 ${
                       msg.role === 'user'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-slate-800/50 text-foreground'
                     }`}
                   >
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                   </div>
                 </div>
               ))}
 
               {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
                 <div className="flex justify-start">
-                  <div className="bg-slate-800/50 rounded-2xl px-4 py-3">
-                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  <div className="bg-slate-800/50 rounded-xl px-3 py-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                   </div>
                 </div>
               )}
@@ -679,17 +631,16 @@ const AgentRunner = () => {
             </div>
           </ScrollArea>
 
-          {/* Quick actions */}
+          {/* Quick actions - smaller buttons */}
           {messages.length === 0 && (
-            <div className="px-6 pb-2">
-              <div className="flex items-center gap-2 justify-center flex-wrap max-w-3xl mx-auto">
+            <div className="px-4 pb-2">
+              <div className="flex items-center gap-1.5 justify-center flex-wrap max-w-3xl mx-auto">
                 {quickActions.map((action) => (
                   <Button
                     key={action}
                     variant="outline"
-                    size="sm"
                     onClick={() => handleSendMessage(action)}
-                    className="bg-slate-800/50 border-slate-700 hover:bg-slate-700"
+                    className="h-8 px-3 text-xs bg-slate-800/50 border-slate-700 hover:bg-slate-700"
                     disabled={isStreaming}
                   >
                     {action}
@@ -699,11 +650,11 @@ const AgentRunner = () => {
             </div>
           )}
 
-          {/* ChatGPT-style input area */}
-          <div className="p-4 pb-6">
+          {/* ChatGPT-style input area - smaller padding */}
+          <div className="p-3 pb-5">
             <div className="max-w-3xl mx-auto">
               <div 
-                className="relative flex items-end gap-2 rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 transition-colors focus-within:border-slate-600"
+                className="relative flex items-end gap-2 rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2 transition-colors focus-within:border-slate-600"
               >
 
                 {/* Textarea - expands upward, no scrollbar */}
@@ -713,8 +664,8 @@ const AgentRunner = () => {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={`Message ${agent.name}...`}
-                  className="flex-1 bg-transparent border-0 text-foreground placeholder:text-slate-500 resize-none focus:outline-none focus:ring-0 min-h-[24px] py-0.5 overflow-hidden"
-                  style={{ height: '24px' }}
+                  className="flex-1 bg-transparent border-0 text-sm text-foreground placeholder:text-slate-500 resize-none focus:outline-none focus:ring-0 min-h-[22px] py-0.5 overflow-hidden"
+                  style={{ height: '22px' }}
                   disabled={isStreaming}
                   rows={1}
                 />
@@ -723,16 +674,16 @@ const AgentRunner = () => {
                 <button
                   onClick={() => handleSendMessage()}
                   disabled={!input.trim() || isStreaming}
-                  className="shrink-0 p-2 -mr-2 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="shrink-0 p-1.5 -mr-1.5 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ 
                     backgroundColor: input.trim() && !isStreaming ? planetColor : 'transparent',
                     color: input.trim() && !isStreaming ? 'white' : 'currentColor'
                   }}
                 >
                   {isStreaming ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
                   ) : (
-                    <ArrowUp className="w-5 h-5" />
+                    <ArrowUp className="w-4 h-4" />
                   )}
                 </button>
               </div>

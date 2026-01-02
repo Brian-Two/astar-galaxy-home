@@ -9,7 +9,7 @@ import { usePlanets } from '@/hooks/usePlanets';
 import { useAgentConversation, Message } from '@/hooks/useAgentConversation';
 import { useObjectiveProgress } from '@/hooks/useObjectiveProgress';
 import { CollapsedSidebar } from '@/components/navigation/CollapsedSidebar';
-import { StarFloodAnimation } from '@/components/astar/StarFloodAnimation';
+
 import { toast } from 'sonner';
 import { Agent, LearningObjective, AgentGuardrails } from '@/components/planet/types';
 
@@ -132,7 +132,7 @@ const AgentRunner = () => {
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [activeObjectiveIndex, setActiveObjectiveIndex] = useState<number>(0);
-  const [showStarFlood, setShowStarFlood] = useState(false);
+  
 
   // Get planet info
   const { planets } = usePlanets();
@@ -216,7 +216,7 @@ const AgentRunner = () => {
     }, 250);
   };
 
-  // Award stars and show animation
+  // Award stars for objective
   const awardStarsForObjective = useCallback(async (objectiveIndex: number) => {
     // Mark as hit in DB
     const success = await markObjectiveHit(objectiveIndex);
@@ -226,9 +226,6 @@ const AgentRunner = () => {
         const newStars = (profile.stars || 0) + 10;
         await updateProfile({ stars: newStars });
       }
-      
-      // Show flood animation
-      setShowStarFlood(true);
     }
   }, [markObjectiveHit, profile, updateProfile]);
 
@@ -421,12 +418,6 @@ const AgentRunner = () => {
     <div className="min-h-screen flex w-full bg-background overflow-hidden relative">
       <CollapsedSidebar />
 
-      {/* Star flood animation overlay */}
-      <StarFloodAnimation
-        isVisible={showStarFlood}
-        onComplete={() => setShowStarFlood(false)}
-        duration={5000}
-      />
 
       <div
         className="flex-1 flex flex-col relative"

@@ -160,13 +160,6 @@ export const SubjectPanel = ({ subject, planetId, onClose, onDelete, onRename }:
               Jump In
             </Button>
             <Button 
-              variant="outline"
-              className="w-full"
-              onClick={() => navigate(`/astar-ai?subject=${encodeURIComponent(subject.name)}`)}
-            >
-              Open ASTAR.AI
-            </Button>
-            <Button 
               variant="secondary"
               className="w-full"
               onClick={() => navigate(`/board?subject=${encodeURIComponent(subject.name)}`)}
